@@ -45,7 +45,7 @@ userRouter.post("/otp-verification",userController.registerVerification)
 userRouter.post("/login",userController.login)
 
 // Profile
-userRouter.put("/api/user/update/:userId",upload.single("avatar"),userController.updateProfile)
+userRouter.put("/api/user/update",upload.single("avatar"),userController.updateProfile)
 
 
 export default userRouter

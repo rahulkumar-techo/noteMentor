@@ -23,8 +23,7 @@ class UserController {
 
     async updateProfile(req: Request, res: Response) {
         try {
-            // remove after debug
-            const { userId } = req.params;
+            const userId = req?.user?._id!
             if (!req.body) {
                 return HandleResponse.badRequest(res, "Invalid field")
             }
@@ -84,13 +83,13 @@ class UserController {
         try {
             const { email, password } = req.body;
             const oldRefreshToken = req?.cookies?.refreshToken;
-            console.log({oldRefreshToken})
+            console.log({ oldRefreshToken })
             const validatedData = loginValidation.parse({ email, password });
-            const { accessToken, refreshToken, accessTTL, refreshTTL } = await userService.loginByEmailAndPassword(oldRefreshToken,validatedData);
+            const { accessToken, refreshToken, accessTTL, refreshTTL } = await userService.loginByEmailAndPassword(oldRefreshToken, validatedData);
 
             setTokenCookies({ res, accessToken, refreshToken, accessTTL, refreshTTL });
-            return HandleResponse.success(res,null,"Logined")
-        } catch (error:any) {
+            return HandleResponse.success(res, null, "Logined")
+        } catch (error: any) {
             console.error("❌ Login Controller Error:", error.message);
             return HandleResponse.error(res, error.message);
         }
