@@ -9,7 +9,6 @@ import { Document, Types } from "mongoose";
 
 // 🎓 Academic Info
 export interface IUserAcademic {
-  userId: string;
   board: string;
   classOrYear: string;
   subjects: string[];

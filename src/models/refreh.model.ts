@@ -18,11 +18,11 @@ const refreshTokenSchema = new Schema<IRefreshToken>(
     ip: { type: String },
     userAgent: { type: String },
     revoked: { type: Boolean, default: false },
-    blacklist:Boolean
+    blacklist: { type: Boolean, default: false }
   },
   { timestamps: true }
 );
 
 refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // auto-delete expired tokens
-
+refreshTokenSchema.set("autoIndex", true);
 export const RefreshTokenModel = mongoose.model<IRefreshToken>("RefreshToken", refreshTokenSchema);

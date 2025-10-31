@@ -1,13 +1,16 @@
+/**
+ * Utility to generate access & refresh tokens for users.
+ * - Deletes old refresh token (from Redis + DB)
+ * - Creates new tokens (JWT + Redis + Mongo)
+ * - Returns both tokens with expiry info
+ */
+
 import jwt, { JwtPayload } from "jsonwebtoken";
-
 import ms from "ms";
-
 import redis from "../../config/client-redis";
 import { RefreshTokenModel } from "../../models/refreh.model";
 import { IUser } from "../../interfaces/user.interface";
 
-
-/* --------------------- Payload & Token Interfaces --------------------- */
 export interface IPayload {
   _id: string;
 }
@@ -15,11 +18,10 @@ export interface IPayload {
 export interface ITokenResult {
   accessToken: string;
   refreshToken: string;
-  accessTTL: number;    // seconds
-  refreshTTL: number;   // seconds
+  accessTTL: number;
+  refreshTTL: number;
 }
 
-/* --------------------- Token Generation --------------------- */
 type TGenerateTokens = {
   user: Partial<IUser>;
   oldRefreshToken?: string;
@@ -37,42 +39,44 @@ export const generateTokens = async ({
     throw new Error("JWT secret keys are missing in environment variables");
   }
 
-  const payload: IPayload = {
-    _id: String(user._id)
-  };
+  const payload: IPayload = { _id: String(user._id) };
 
-  // Token expiry
-  const accessTokenExp = "15m"; // Access token: 15 minutes
-  const refreshTokenExp = "7d"; // Refresh token: 7 days
+  // ⏳ Token lifetimes
+  const accessTTL = Math.floor(ms("15m") / 1000);
+  const refreshTTL = Math.floor(ms("7d") / 1000);
 
-  const accessTTL = Math.floor(ms(accessTokenExp) / 1000);
-  const refreshTTL = Math.floor(ms(refreshTokenExp) / 1000);
-
-  // Generate JWT tokens
+  // 🎫 Generate JWT tokens
   const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_TOKEN_KEY, { expiresIn: accessTTL });
   const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_TOKEN_KEY, { expiresIn: refreshTTL });
 
-  // ⚡ Immediately return tokens to client
-  process.nextTick(async () => {
-    try {
-      // Run all DB + Redis ops in parallel (non-blocking)
+  try {
+    // Remove old token (if exists)
+    if (oldRefreshToken) {
       await Promise.allSettled([
-        oldRefreshToken && redis.del(`refresh:${oldRefreshToken}`),
-        oldRefreshToken && RefreshTokenModel.findOneAndDelete({ user: payload._id }),
-        redis.set(`refresh:${refreshToken}`, String(user._id), "EX", refreshTTL),
-        RefreshTokenModel.create({
-          userId: payload._id,
-          token: refreshToken,
-          deviceId,
-          ip,
-          expiresAt: new Date(Date.now() + refreshTTL * 1000),
-        }),
+        redis.del(`refresh:${oldRefreshToken}`),
+        RefreshTokenModel.findOneAndDelete({ token: oldRefreshToken }).exec(),
       ]);
-      console.log(`✅ Background token sync done for user ${payload._id}`);
-    } catch (err) {
-      console.error("⚠️ Token background task failed:", err);
+      console.log(`🗑️ Old refresh token deleted for user ${payload._id}`);
     }
-  });
+
+    // 💾 2. Store new refresh token in Redis + Mongo
+    await Promise.all([
+      redis.set(`refresh:${refreshToken}`, String(user._id), "EX", refreshTTL),
+      RefreshTokenModel.create({
+        user: payload._id,
+        token: refreshToken,
+        deviceId,
+        ip,
+        expiresAt: new Date(Date.now() + refreshTTL * 1000),
+      }),
+    ]);
+
+    console.log(`✅ New refresh token created for user ${payload._id}`);
+  } catch (err) {
+    console.error("❌ Token creation error:", err);
+  }
+
+  // 🚀 Return tokens immediately
   return { accessToken, refreshToken, accessTTL, refreshTTL };
 };
 
@@ -81,9 +85,9 @@ export const isTokenExp = (token: string): boolean => {
   if (!token) return true;
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_KEY!) as JwtPayload;
-    const currentTime = Math.floor(Date.now() / 1000);
-    return (decoded.exp ?? 0) < currentTime;
+    const now = Math.floor(Date.now() / 1000);
+    return (decoded.exp ?? 0) < now;
   } catch {
-    return true; // treat invalid or expired token as expired
+    return true;
   }
 };

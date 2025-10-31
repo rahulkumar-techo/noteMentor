@@ -9,6 +9,7 @@ import autoRefreshAccessToken from "../middlewares/auto-refresh";
 import { authenticate } from "../middlewares/isAuthenticated";
 import { userController } from "../controllers/user.controller";
 import { upload } from "../middlewares/multer.middleware";
+import { academicController } from "../controllers/academic.controller";
 
 // /api/user/update/academic, /update/personalization, /update/settings?
 const userRouter = express()
@@ -47,5 +48,7 @@ userRouter.post("/login",userController.login)
 // Profile
 userRouter.put("/api/user/update",upload.single("avatar"),userController.updateProfile)
 
+// academic 
+userRouter.put("/api/user/academic",autoRefreshAccessToken,authenticate,academicController.editAcademic)
 
 export default userRouter
