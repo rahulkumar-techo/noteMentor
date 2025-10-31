@@ -18,65 +18,70 @@ import setTokenCookies from "../shared/utils/set-cookies";
 import bcrypt from "bcryptjs"
 
 interface IUpdateProfile {
-  username: string;
-  fullname: string;
+  username?: string;
+  fullname?: string;
   avatar?: Express.Multer.File;
 }
 
 class UserService {
   private fileManager = new FileManger();
   async updateProfile(
-    userId: string,
-    { username, fullname, avatar }: IUpdateProfile
-  ): Promise<Partial<IUser> | null> {
-    try {
-      if (!username || !fullname) {
-        throw new Error("Missing required fields: username or fullname");
-      }
+  userId: string,
+  { username, fullname, avatar }: IUpdateProfile
+): Promise<Partial<IUser> | null> {
+  try {
+    const user = await UserModel.findById(userId).select("avatar username fullname");
+    if (!user) throw new Error("User not found");
 
-      const result = await helperService.checkAndGenUsername(username)
+    const updateData: Partial<IUser> = {};
 
-      const user = await UserModel.findById(userId).select("avatar username fullname");
-      if (!user) throw new Error("User not found");
-
-      let updatedAvatar: cloudinaryFile | undefined;
-
-      // If new avatar is uploaded, handle Cloudinary update
-      if (avatar) {
-        try {
-          const result = await this.fileManager.updateFile(
-            user.avatar?.public_id || "",
-            avatar,
-            `/noteGenie/avatar/${userId}`
-          );
-
-          updatedAvatar = {
-            secure_url: result.data.secure_url,
-            public_id: result.data.public_id,
-            bytes: result.data.bytes,
-          };
-        } catch (error: any) {
-          console.error(`⚠️ Cloudinary update error: ${error.message}`);
-        }
-      }
-
-      // Update MongoDB user document
-      const updatedUser = await UserModel.findByIdAndUpdate(
-        userId,
-        {
-          username: result,
-          fullname,
-          ...(updatedAvatar && { avatar: updatedAvatar }),
-        },
-        { new: true, select: "username fullname avatar" }
-      );
-
-      return updatedUser ? updatedUser.toObject() : null;
-    } catch (error) {
-      console.error("❌ Error updating profile:", error);
-      return null;
+    // ✅ Conditionally update username (check for uniqueness)
+    if (username && username !== user.username) {
+      const newUsername = await helperService.checkAndGenUsername(username);
+      updateData.username = newUsername;
     }
+
+    // ✅ Conditionally update fullname
+    if (fullname && fullname !== user.fullname) {
+      updateData.fullname = fullname;
+    }
+
+    // ✅ Conditionally update avatar
+    if (avatar) {
+      try {
+        const result = await this.fileManager.updateFile(
+          user.avatar?.public_id || "",
+          avatar,
+          `/noteGenie/avatar/${userId}`
+        );
+
+        updateData.avatar = {
+          secure_url: result.data.secure_url,
+          public_id: result.data.public_id,
+          bytes: result.data.bytes,
+        };
+      } catch (error: any) {
+        console.error(`⚠️ Cloudinary update error: ${error.message}`);
+      }
+    }
+
+    // ❌ Prevent updating if no new data is provided
+    if (Object.keys(updateData).length === 0) {
+      throw new Error("No fields provided for update");
+    }
+
+    // ✅ Update user document safely
+    const updatedUser = await UserModel.findByIdAndUpdate(userId, updateData, {
+      new: true,
+      select: "username fullname avatar",
+    });
+
+    return updatedUser ? updatedUser.toObject() : null;
+  } catch (error) {
+    console.error("❌ Error updating profile:", error);
+    return null;
   }
+}
   // ------------- Register User ---------------------
   async register(data: RegisterInput): Promise<Partial<IUser> | null> {
     try {
@@ -141,27 +146,27 @@ class UserService {
     }
   }
   // login
-async loginByEmailAndPassword(oldRefreshToken:string,{ email, password }: { email: string; password: string }) {
-  try {
-    const user = await UserModel.findOne({ email });
-    if (!user) throw new Error("Not a registered user");
+  async loginByEmailAndPassword(oldRefreshToken: string, { email, password }: { email: string; password: string }) {
+    try {
+      const user = await UserModel.findOne({ email });
+      if (!user) throw new Error("Not a registered user");
 
-    if (!user.isVerified) throw new Error("User not verified");
+      if (!user.isVerified) throw new Error("User not verified");
 
-    const isMatched = await bcrypt.compare(password,user?.password);
-    if (!isMatched) throw new Error("Incorrect password");
+      const isMatched = await bcrypt.compare(password, user?.password);
+      if (!isMatched) throw new Error("Incorrect password");
 
-    const refactorUser = { _id: user._id };
-    const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser,oldRefreshToken });
+      const refactorUser = { _id: user._id };
+      const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser, oldRefreshToken });
 
-    console.log("✅ Tokens generated successfully for", email);
+      console.log("✅ Tokens generated successfully for", email);
 
-    return {accessToken, refreshToken, accessTTL, refreshTTL  };
-  } catch (error: any) {
-    console.error("❌ Login error:", error.message);
-    throw new Error(error.message);
+      return { accessToken, refreshToken, accessTTL, refreshTTL };
+    } catch (error: any) {
+      console.error("❌ Login error:", error.message);
+      throw new Error(error.message);
+    }
   }
-}
 
 
 

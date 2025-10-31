@@ -11,6 +11,7 @@ import { userController } from "../controllers/user.controller";
 import { upload } from "../middlewares/multer.middleware";
 import { academicController } from "../controllers/academic.controller";
 import { personalizationController } from "../controllers/personalization.controller";
+import { deviceController } from "../controllers/device.controller";
 
 // /api/user/update/academic, /update/personalization, /update/settings?
 const userRouter = express()
@@ -47,7 +48,7 @@ userRouter.post("/otp-verification",userController.registerVerification)
 userRouter.post("/login",userController.login)
 
 // Profile
-userRouter.put("/api/user/update",upload.single("avatar"),userController.updateProfile)
+userRouter.put("/api/user/update-profile",autoRefreshAccessToken,authenticate,upload.single("avatar"),userController.updateProfile)
 
 // academic 
 userRouter.put("/api/user/academic",autoRefreshAccessToken,authenticate,academicController.editAcademic)
@@ -56,4 +57,7 @@ userRouter.put("/api/user/academic",autoRefreshAccessToken,authenticate,academic
 userRouter.get("/api/user/personalization", autoRefreshAccessToken,authenticate, personalizationController.get);
 userRouter.put("/api/user/personalization", autoRefreshAccessToken,authenticate,personalizationController.update);
 
+// device settings
+userRouter.put("/api/user/settings",autoRefreshAccessToken,authenticate,deviceController.update)
+userRouter.get("/api/user/settings",autoRefreshAccessToken,authenticate,deviceController.get)
 export default userRouter
