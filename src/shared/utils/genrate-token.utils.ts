@@ -1,9 +1,10 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 
 import ms from "ms";
-import { IUser } from "../../models/user.model";
+
 import redis from "../../config/client-redis";
 import { RefreshTokenModel } from "../../models/refreh.model";
+import { IUser } from "../../interfaces/user.interface";
 
 
 /* --------------------- Payload & Token Interfaces --------------------- */

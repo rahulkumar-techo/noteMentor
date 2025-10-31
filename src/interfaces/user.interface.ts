@@ -48,6 +48,7 @@ export interface IUser extends Document {
   username: string;
   avatar: cloudinaryFile;
   fullname: string;
+  password:string;
   email: string;
   social_auth?: {
     googleId?: string;
@@ -59,4 +60,9 @@ export interface IUser extends Document {
   academic?: IUserAcademic;
   personalization?: IUserPersonalization;
   settings?: IUserDevice;
+    comparePassword(candidatePassword: string): Promise<boolean>;
+  otp?: {
+    token: string;
+    createdAt: Date;
+  };
 }

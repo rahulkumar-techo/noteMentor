@@ -38,7 +38,7 @@
 [![Express Session](https://img.shields.io/badge/Session-Express_Session-1E88E5)](https://www.npmjs.com/package/express-session)
 [![Morgan](https://img.shields.io/badge/Logger-Morgan-607D8B)](https://www.npmjs.com/package/morgan)
 [![Winston](https://img.shields.io/badge/Logger-Winston-4DB6AC)](https://www.npmjs.com/package/winston)
-
+[![bcryptjs](https://img.shields.io/badge/Library-bcryptjs-FF6A00)](https://www.npmjs.com/package/bcryptjs)
 ---
 
 ### ⚡ **Real-time & Caching**

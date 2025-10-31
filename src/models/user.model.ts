@@ -7,7 +7,7 @@
 
 import mongoose, { Schema } from "mongoose";
 import { IUser } from "../interfaces/user.interface";
-
+import bcrypt from "bcryptjs"
 // 🎓 Embedded Subschemas (for nesting in main user schema)
 const AcademicSchema = new Schema(
   {
@@ -78,13 +78,14 @@ const DeviceSchema = new Schema(
 const userSchema = new Schema<IUser>(
   {
     username: { type: String, unique: true, required: [true, "username is required"] },
-    avatar: { 
-      secure_url:{type:String,default:""},
-      public_id:{type:String,default:""},
-      bytes:{type:String,default:""}
+    avatar: {
+      secure_url: { type: String, default: "" },
+      public_id: { type: String, default: "" },
+      bytes: { type: String, default: "" }
     },
     fullname: { type: String, required: true },
     email: { type: String, required: true, unique: true },
+    password: String,
     social_auth: {
       googleId: { type: String, default: null },
     },
@@ -93,7 +94,7 @@ const userSchema = new Schema<IUser>(
       enum: ["google", "local"],
       required: true,
     },
-    isVerified: { type: Boolean ,default:false},
+    isVerified: { type: Boolean, default: false },
     isProfileComplete: { type: Boolean, default: false },
     role: {
       type: String,
