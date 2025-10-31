@@ -7,7 +7,7 @@ export interface IUserRequest {
   fullname?: string;
   picture?: string;
   isVerified?: boolean;
-  provider:"local"|"google"
+  provider?:"local"|"google"
 }
 
 // Global augmentation for Express
