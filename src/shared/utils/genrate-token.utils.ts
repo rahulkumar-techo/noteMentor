@@ -52,12 +52,27 @@ export const generateTokens = async ({
   const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_TOKEN_KEY, { expiresIn: accessTTL });
   const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_TOKEN_KEY, { expiresIn: refreshTTL });
 
-  // Store refresh token: Redis + MongoDB
-  if (oldRefreshToken) await redis.del(`refresh:${oldRefreshToken}`);
-  await RefreshTokenModel.findOneAndDelete({ userId: payload._id });
-  await redis.set(`refresh:${refreshToken}`, String(user._id), "EX", refreshTTL);
-  await RefreshTokenModel.create({ userId: payload._id, token: refreshToken, deviceId, ip,expiresAt:refreshTTL,user:payload?._id });
-
+  // ⚡ Immediately return tokens to client
+  process.nextTick(async () => {
+    try {
+      // Run all DB + Redis ops in parallel (non-blocking)
+      await Promise.allSettled([
+        oldRefreshToken && redis.del(`refresh:${oldRefreshToken}`),
+        oldRefreshToken && RefreshTokenModel.findOneAndDelete({ user: payload._id }),
+        redis.set(`refresh:${refreshToken}`, String(user._id), "EX", refreshTTL),
+        RefreshTokenModel.create({
+          userId: payload._id,
+          token: refreshToken,
+          deviceId,
+          ip,
+          expiresAt: new Date(Date.now() + refreshTTL * 1000),
+        }),
+      ]);
+      console.log(`✅ Background token sync done for user ${payload._id}`);
+    } catch (err) {
+      console.error("⚠️ Token background task failed:", err);
+    }
+  });
   return { accessToken, refreshToken, accessTTL, refreshTTL };
 };
 

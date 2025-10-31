@@ -83,8 +83,10 @@ class UserController {
     async login(req: Request, res: Response) {
         try {
             const { email, password } = req.body;
+            const oldRefreshToken = req?.cookies?.refreshToken;
+            console.log({oldRefreshToken})
             const validatedData = loginValidation.parse({ email, password });
-            const { accessToken, refreshToken, accessTTL, refreshTTL } = await userService.loginByEmailAndPassword(validatedData);
+            const { accessToken, refreshToken, accessTTL, refreshTTL } = await userService.loginByEmailAndPassword(oldRefreshToken,validatedData);
 
             setTokenCookies({ res, accessToken, refreshToken, accessTTL, refreshTTL });
             return HandleResponse.success(res,null,"Logined")

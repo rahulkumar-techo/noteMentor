@@ -25,7 +25,8 @@ userRouter.get(
       const refactorUser = {
         _id: new Types.ObjectId(user?._id) ,
       }
-      const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser });
+      const oldRefreshToken = req?.cookies?.refreshToken;
+      const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser,oldRefreshToken });
       setTokenCookies({ res, accessToken, refreshToken, accessTTL, refreshTTL });
     //   await redis.set(`session:${user._id}`, JSON.stringify(user), "EX", accessTTL);
       res.redirect("/");

@@ -141,7 +141,7 @@ class UserService {
     }
   }
   // login
-async loginByEmailAndPassword({ email, password }: { email: string; password: string }) {
+async loginByEmailAndPassword(oldRefreshToken:string,{ email, password }: { email: string; password: string }) {
   try {
     const user = await UserModel.findOne({ email });
     if (!user) throw new Error("Not a registered user");
@@ -152,7 +152,7 @@ async loginByEmailAndPassword({ email, password }: { email: string; password: st
     if (!isMatched) throw new Error("Incorrect password");
 
     const refactorUser = { _id: user._id };
-    const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser });
+    const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser,oldRefreshToken });
 
     console.log("✅ Tokens generated successfully for", email);
 
