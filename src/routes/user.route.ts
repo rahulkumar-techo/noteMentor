@@ -10,6 +10,7 @@ import { authenticate } from "../middlewares/isAuthenticated";
 import { userController } from "../controllers/user.controller";
 import { upload } from "../middlewares/multer.middleware";
 import { academicController } from "../controllers/academic.controller";
+import { personalizationController } from "../controllers/personalization.controller";
 
 // /api/user/update/academic, /update/personalization, /update/settings?
 const userRouter = express()
@@ -50,5 +51,9 @@ userRouter.put("/api/user/update",upload.single("avatar"),userController.updateP
 
 // academic 
 userRouter.put("/api/user/academic",autoRefreshAccessToken,authenticate,academicController.editAcademic)
+
+// Personalization 
+userRouter.get("/api/user/personalization", autoRefreshAccessToken,authenticate, personalizationController.get);
+userRouter.put("/api/user/personalization", autoRefreshAccessToken,authenticate,personalizationController.update);
 
 export default userRouter
