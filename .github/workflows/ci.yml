@@ -1,0 +1,31 @@
+name: NoteMentor Backend CI (Development)
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build:
+    name: 🧩 Install & Verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧾 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
+
+      - name: 📦 Install dependencies
+        run: npm install
+
+      - name: 🔍 Verify TypeScript compilation
+        run: npx tsc --noEmit
+
+      - name: 🧹 Clean up cache
+        if: always()
+        run: npm cache clean --force
