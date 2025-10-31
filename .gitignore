@@ -1,4 +1,95 @@
-node_modules
-package-lock.json
+# -----------------------------
+# 📁 General
+# -----------------------------
+node_modules/
+dist/
+build/
+.cache/
+.tmp/
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# ⚙️ Environment Files
+# -----------------------------
 .env
-./env
+.env.*
+!.env.example
+
+# -----------------------------
+# 🧩 TypeScript
+# -----------------------------
+*.tsbuildinfo
+
+# -----------------------------
+# ⚛️ Next.js
+# -----------------------------
+.next/
+out/
+.vercel/
+
+# -----------------------------
+# 🧠 VS Code & IDEs
+# -----------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# -----------------------------
+# 🖼️ Uploads & Storage
+# -----------------------------
+uploads/
+public/uploads/
+storage/
+cloudinary/
+
+# -----------------------------
+# 🧮 Database & Cache
+# -----------------------------
+data/
+db.sqlite
+*.db
+*.sqlite
+redis-data/
+dump.rdb
+
+# -----------------------------
+# 🔐 Keys / Certificates
+# -----------------------------
+*.pem
+*.key
+*.crt
+*.pfx
+
+# -----------------------------
+# 📦 Package managers
+# -----------------------------
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# -----------------------------
+# 🧪 Tests & Coverage
+# -----------------------------
+coverage/
+jest-coverage/
+.nyc_output/
+
+# -----------------------------
+# 🚀 Production / Deployment
+# -----------------------------
+*.tgz
+*.tar.gz
+*.zip
+*.bak
+*.tmp
+*.pid
+*.seed
+*.log
