@@ -1,16 +1,15 @@
 // src/types/express/index.d.ts
+// Purpose: Safely extend Express.Request.user with your own IUserRequest type.
+
 export interface IUserRequest {
   _id: string;
-  email?: string;
-  fullname?: string;
-  provider?: "google" | "local"; // identify login type
+  // add more fields if needed
 }
 
+// Extend Express namespace globally
 declare global {
   namespace Express {
-    interface Request {
-      user?: IUserRequest;
-    }
+    interface User extends IUserRequest {} // ✅ merge into existing passport type if it exists
   }
 }
 
