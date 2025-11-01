@@ -22,6 +22,7 @@ export const config = {
     apiSecret: process.env.CLOUDINARY_API_SECRET!,
   },
   openaiKey: process.env.OPENAI_API_KEY!,
+  geminiKey: process.env.GEMINI_API_KEY||"",
   redisUrl: process.env.REDIS_URL!,
   smtp: {
     host: process.env.SMTP_HOST,

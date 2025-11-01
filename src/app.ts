@@ -7,6 +7,7 @@ import helmet from "helmet";
 import userRouter from "./routes/user.route";
 import morgan from "morgan"
 import globalError_handler from "./shared/utils/globalError-handler";
+import questionRoute from "./routes/question.route";
 
 
 const app = express();
@@ -42,6 +43,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 // ---------------- Routes ----------------
 app.use(userRouter)
+app.use(questionRoute)
 
 // ---------------- 404 Handler ----------------
 app.use((req: Request, res: Response) => {
