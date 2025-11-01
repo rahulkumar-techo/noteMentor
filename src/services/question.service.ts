@@ -98,6 +98,54 @@ class QuestionService {
       };
     }
   }
+
+  // ✅ Get all questions created by a specific user
+  async getQuestions(userId: string) {
+    try {
+      // Fetch all questions where creatorId matches
+      const result = await questionModel.find({ creatorId: userId }).lean();
+
+      // If no questions found, return empty array
+      if (!result || result.length === 0) {
+        return { message: "No questions found for this user", data: [] };
+      }
+
+      return {
+        message: "User questions fetched successfully",
+        count: result.length,
+        data: result,
+      };
+    } catch (error: any) {
+      console.error("❌ [GetQuestions Error]:", error.message);
+      return { error: "Failed to fetch user questions" };
+    }
+  }
+
+// ✅ Delete question with ownership check
+async deleteQuestion({ questionId, userId }: { questionId: string; userId: string }) {
+  try {
+    // 🔍 Find question by both ID and creator
+    const question = await questionModel.findOne({ _id: questionId, creatorId: userId }).lean();
+
+    if (!question) {
+      throw new Error("Question not found or you don't have permission to delete it.");
+    }
+
+    // 🗑️ Delete question
+    await questionModel.findByIdAndDelete(questionId);
+
+    return {
+      success: true,
+      message: "Question deleted successfully",
+      deletedId: questionId,
+    };
+  } catch (error: any) {
+    console.error("❌ [DeleteQuestion Error]:", error.message);
+    return { success: false, message: error.message };
+  }
+}
+
+
 }
 
 export const questionService = new QuestionService();

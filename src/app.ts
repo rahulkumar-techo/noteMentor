@@ -8,6 +8,7 @@ import userRouter from "./routes/user.route";
 import morgan from "morgan"
 import globalError_handler from "./shared/utils/globalError-handler";
 import questionRoute from "./routes/question.route";
+import path from "path";
 
 
 const app = express();
@@ -18,7 +19,8 @@ app.use(cookieParser());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(helmet());
 app.use(morgan("dev"));
-
+// Serve public folder
+app.use(express.static(path.join(__dirname, "public")));
 // Session is required for Passport OAuth to maintain state
 app.use(
   session({
