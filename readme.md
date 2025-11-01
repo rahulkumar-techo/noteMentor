@@ -69,6 +69,9 @@ It empowers both **students and teachers** to collaborate, learn, and evaluate e
 
 ---
 
+click below to know how ai generates questions and store in DB 👇
+[Click here ](./src/shared/ai/ai.readme.md)
+
 ## 🛠️ Installation
 
 ```bash
