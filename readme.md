@@ -47,6 +47,42 @@
 [![ioredis](https://img.shields.io/badge/Client-ioredis-FF6F00)](https://www.npmjs.com/package/ioredis)
 
 ---
+### 🚀 DevOps Implementation — NoteMentor
+
+This document outlines the **DevOps stack**, **tools**, and **automation pipeline** used in NoteMentor’s backend for reliable CI/CD, containerization, and deployment.
+
+---
+
+## 🧩 CI/CD Pipeline
+
+[![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)](https://github.com/features/actions)
+[![Node.js](https://img.shields.io/badge/Runtime-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![NPM](https://img.shields.io/badge/Package-NPM-CB3837?logo=npm&logoColor=white)](https://www.npmjs.com/)
+[![Lint](https://img.shields.io/badge/Code%20Quality-ESLint-4B32C3?logo=eslint&logoColor=white)](https://eslint.org/)
+
+- Continuous Integration (CI) via **GitHub Actions**
+- Automatic build & test pipeline on every `dev` branch push
+- Auto Docker image build and push to DockerHub after successful tests
+
+---
+
+## 🐳 Containerization
+
+[![Docker](https://img.shields.io/badge/Container-Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Node](https://img.shields.io/badge/Base%20Image-node%3A20--alpine-026E00?logo=node.js&logoColor=white)](https://hub.docker.com/_/node)
+[![DockerHub](https://img.shields.io/badge/DockerHub-rahulkumar9142%2Fnotementor--dev-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/rahulkumar9142/notementor-dev)
+
+**Dockerfile Stages**
+1. **Builder Stage** → Installs dependencies, builds app  
+2. **Runner Stage** → Copies build output, installs only production deps  
+3. Lightweight container (based on Node Alpine)  
+4. Healthcheck for container uptime  
+
+```bash
+docker build -t rahulkumar9142/notementor-dev:latest .
+docker push rahulkumar9142/notementor-dev:latest
+
+```
 
 ## 🧰 Features
 
@@ -71,6 +107,7 @@ It empowers both **students and teachers** to collaborate, learn, and evaluate e
 
 click below to know how ai generates questions and store in DB 👇
 [Click here ](./src/shared/ai/ai.readme.md)
+[Docker Image Json detail ](https://hub.docker.com/v2/repositories/rahulkumar9142/notementor-dev/tags)
 
 ## 🛠️ Installation
 
