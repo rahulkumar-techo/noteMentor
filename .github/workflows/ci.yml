@@ -20,6 +20,9 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
+permissions:
+  contents: write  # ✅ allows tagging, pushing, etc.
+  packages: write  # optional for npm publish etc.
 
 env:
   IMAGE_NAME: notementor-main
