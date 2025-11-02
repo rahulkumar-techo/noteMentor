@@ -1,50 +1,46 @@
 # -----------------------------
-# 🏗️  Stage 1: Build the app
+# Stage 1 — Build dependencies and app
 # -----------------------------
-FROM node:25-alpine AS builder
+FROM node:20-alpine AS builder
 
-# Set working directory inside container
 WORKDIR /app
 
-# Copy package files first (better caching)
+# Copy package files first for caching
 COPY package*.json ./
 
-# Install dependencies (no dev dependencies for production build)
-RUN npm install --production=false
+# Install all dependencies
+RUN npm install
 
-# Copy all source code to container
+# Copy source code
 COPY . .
 
-# Run your build script (e.g., compiles TypeScript or builds Next.js)
+# Build app (skip if not TypeScript or Next.js)
 RUN npm run build
 
 
 # -----------------------------
-# 🚀 Stage 2: Run the built app
+# Stage 2 — Production image
 # -----------------------------
-FROM node:25-alpine AS runner
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Copy only necessary files from builder stage
+# Copy only package files and built app from builder
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
 
-# Install only production dependencies
-# RUN npm install --production
 # ✅ Install only production dependencies (npm must exist)
 RUN npm install --omit=dev
 
-# Set environment variable
+# Environment setup
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Expose the app port
 EXPOSE 3000
 
-# Health check (optional)
+# Optional healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health')" || exit 1
+  CMD node -e "require('http').get('http://localhost:3000')" || exit 1
 
-# Run the application
-CMD ["npm", "start"]
+# Start app
+CMD ["node", "dist/server.js"]
