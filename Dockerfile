@@ -31,7 +31,9 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
 
 # Install only production dependencies
-RUN npm install --production
+# RUN npm install --production
+# ✅ Install only production dependencies (npm must exist)
+RUN npm install --omit=dev
 
 # Set environment variable
 ENV NODE_ENV=production
