@@ -55,10 +55,10 @@ jobs:
         run: npx tsc --noEmit
 
       - name: 🧹 Lint Code
-        run: npm run lint || echo "⚠️ Lint skipped"
+        run: npm run lint --if-present || echo "⚠️ Lint warnings"
 
       - name: 🧪 Run Tests
-        run: npm test || echo "⚠️ Tests not defined"
+        run: npm test --if-present 
 
       - name: 🔒 Security Audit
         run: npm audit --audit-level=moderate || echo "⚠️ Security audit warnings"
