@@ -113,24 +113,13 @@ jobs:
     if: always()
 
     steps:
-      - name: 📢 Discord Notification
-        uses: Ilshidur/action-discord@master
-        with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          args: |
-            🚀 **NoteMentor CI/CD**
-            Branch: `${{ github.ref_name }}`
-            Status: `${{ job.status }}`
-            Commit: `${{ github.sha }}`
-            Triggered by: `${{ github.actor }}`
-            🔗 [View Run Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-      - name: 💬 Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: "🧠 *NoteMentor CI/CD* — `${{ github.ref_name }}` completed with *${{ job.status }}* status."
+      - name: 💬 Telegram Notification
+        run: |
+          MESSAGE="🚀 *NoteMentor CI/CD*%0AStatus: *${{ job.status }}*%0ABranch: \`${{ github.ref_name }}\`%0ACommit: \`${{ github.sha }}\`%0ABy: *${{ github.actor }}*%0A🔗 [View Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d parse_mode="Markdown" \
+          -d text="$MESSAGE"
 
   tag:
     name: 🏷️ Auto Version Tag
