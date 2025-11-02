@@ -9,9 +9,11 @@ import morgan from "morgan"
 import globalError_handler from "./shared/utils/globalError-handler";
 import questionRoute from "./routes/question.route";
 import path from "path";
+import { compressionMiddleware } from "./middlewares/compression.middleware";
 
 
 const app = express();
+app.use(compressionMiddleware);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
