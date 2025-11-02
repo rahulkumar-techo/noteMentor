@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import HandleResponse from "../shared/utils/handleResponse.utils";
 import { generateQuestions } from "../shared/ai/gemini";
-import { questionValidation } from "../validations/question.validation";
+import { attemptQuestionValidation, attemptQuestionValidationType, questionValidation } from "../validations/question.validation";
 import { questionService } from "../services/question.service";
 import { streamGenerateQuestions } from "../shared/ai/gemini-chunks";
 
@@ -75,6 +75,21 @@ class QuestionController {
             const result = await questionService.deleteQuestion({ questionId, userId });
             return HandleResponse.success(res, result, "Question deleted")
         } catch (error: any) {
+            return HandleResponse.error(res, error.message)
+        }
+    }
+
+    async attemptQuestion(req: Request, res: Response) {
+        try {
+            const { userId, questionId } = req.body as attemptQuestionValidationType;
+            const isValid = attemptQuestionValidation.parse({ userId, questionId });
+            if (!isValid) {
+                return HandleResponse.badRequest(res, "Invalid field")
+            }
+            
+
+        } catch (error: any) {
+            console.error(error);
             return HandleResponse.error(res, error.message)
         }
     }

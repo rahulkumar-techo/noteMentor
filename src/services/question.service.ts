@@ -9,7 +9,7 @@
 
 import questionModel from "../models/question.model";
 import { generateQuestions } from "../shared/ai/gemini";
-import { QuestionValidationType } from "../validations/question.validation";
+import { attemptQuestionValidationType, QuestionValidationType } from "../validations/question.validation";
 
 class QuestionService {
   /**
@@ -121,30 +121,40 @@ class QuestionService {
     }
   }
 
-// ✅ Delete question with ownership check
-async deleteQuestion({ questionId, userId }: { questionId: string; userId: string }) {
-  try {
-    // 🔍 Find question by both ID and creator
-    const question = await questionModel.findOne({ _id: questionId, creatorId: userId }).lean();
+  // ✅ Delete question with ownership check
+  async deleteQuestion({ questionId, userId }: { questionId: string; userId: string }) {
+    try {
+      // 🔍 Find question by both ID and creator
+      const question = await questionModel.findOne({ _id: questionId, creatorId: userId }).lean();
 
-    if (!question) {
-      throw new Error("Question not found or you don't have permission to delete it.");
+      if (!question) {
+        throw new Error("Question not found or you don't have permission to delete it.");
+      }
+
+      // 🗑️ Delete question
+      await questionModel.findByIdAndDelete(questionId);
+
+      return {
+        success: true,
+        message: "Question deleted successfully",
+        deletedId: questionId,
+      };
+    } catch (error: any) {
+      console.error("❌ [DeleteQuestion Error]:", error.message);
+      return { success: false, message: error.message };
     }
-
-    // 🗑️ Delete question
-    await questionModel.findByIdAndDelete(questionId);
-
-    return {
-      success: true,
-      message: "Question deleted successfully",
-      deletedId: questionId,
-    };
-  } catch (error: any) {
-    console.error("❌ [DeleteQuestion Error]:", error.message);
-    return { success: false, message: error.message };
   }
-}
+  // attempt question
 
+  async attempQuestion({ userId, questionId }: attemptQuestionValidationType) {
+    try {
+
+      // const question = await questionModel.findById()
+
+    } catch (error: any) {
+      throw new Error(error.message)
+    }
+  }
 
 }
 

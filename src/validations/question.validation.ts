@@ -25,3 +25,16 @@ export const questionValidation = z.object({
 });
 
 export type QuestionValidationType = z.infer<typeof questionValidation>;
+
+
+// Attempt question
+
+export const attemptQuestionValidation = z.object({
+  questionId: z.string(),
+  userId: z.string(),
+  answer: z.string(),
+  type: z.enum(["mcq", "short", "long"]).optional(),
+  difficulty:z.enum(["easy", "medium", "hard"]).optional(),
+})
+
+export type attemptQuestionValidationType = z.infer<typeof attemptQuestionValidation>;
