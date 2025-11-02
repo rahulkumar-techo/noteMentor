@@ -33,7 +33,7 @@ COPY --from=builder /app/dist ./dist
 RUN npm install --omit=dev
 
 # Environment setup
-ENV NODE_ENV=production
+# ENV NODE_ENV=production
 ENV PORT=3000
 
 EXPOSE 3000
