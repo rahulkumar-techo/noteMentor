@@ -7,9 +7,13 @@ import helmet from "helmet";
 import userRouter from "./routes/user.route";
 import morgan from "morgan"
 import globalError_handler from "./shared/utils/globalError-handler";
+import questionRoute from "./routes/question.route";
+import path from "path";
+import { compressionMiddleware } from "./middlewares/compression.middleware";
 
 
 const app = express();
+app.use(compressionMiddleware);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -17,7 +21,8 @@ app.use(cookieParser());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(helmet());
 app.use(morgan("dev"));
-
+// Serve public folder
+app.use(express.static(path.join(__dirname, "public")));
 // Session is required for Passport OAuth to maintain state
 app.use(
   session({
@@ -42,6 +47,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 // ---------------- Routes ----------------
 app.use(userRouter)
+app.use(questionRoute)
 
 // ---------------- 404 Handler ----------------
 app.use((req: Request, res: Response) => {
