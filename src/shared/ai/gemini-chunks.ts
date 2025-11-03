@@ -58,6 +58,7 @@ export async function streamGenerateQuestions(
     let parsed: any[];
     try {
       parsed = JSON.parse(clean);
+      console.log({parsed})
     } catch {
       throw new Error("Bad JSON format from Gemini Lite");
     }
@@ -65,7 +66,9 @@ export async function streamGenerateQuestions(
     // 🎯 Background DB save (async)
     process.nextTick(async () => {
       try {
-        const docs = parsed.map((q: any, i: number) => ({
+        const docs = parsed.map((q: any, i: number) =>{
+          console.log(q.opts)
+          return {
           creatorId: userId,
           question: q.q || `Question ${i + 1}`,
           options: q.opts?.map((t: string) => ({ text: t })) || [],
@@ -73,7 +76,9 @@ export async function streamGenerateQuestions(
           topic: data.topic,
           difficulty: data.difficulty,
           type: data.questionType,
-        }));
+        
+          }
+        });
         await questionModel.insertMany(docs);
         console.log(`✅ ${docs.length} saved for user ${userId}`);
       } catch (e: any) {

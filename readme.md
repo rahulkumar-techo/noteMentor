@@ -125,3 +125,15 @@ npm install
 
 # Run the development server
 npm run dev
+```
+## MY FREE DOMAIN
+[🌍My Domain click here see 👈](https://freedomain.one/Direct.sv?cmd=userhome)
+
+```cmd
+curl https://api.dnsexit.com/dns/ud/?apikey=${{API_KEY}} -d host=novamentor.work.gd
+
+```
+- it's a Dynamic IP address
+```json
+{"code":0,"message":"Success - novamentor.work.gd IP stays as 157.35.40.222"}
+```

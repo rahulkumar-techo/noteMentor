@@ -32,7 +32,7 @@ userRouter.get(
       const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser,oldRefreshToken });
       setTokenCookies({ res, accessToken, refreshToken, accessTTL, refreshTTL });
     //   await redis.set(`session:${user._id}`, JSON.stringify(user), "EX", accessTTL);
-      res.redirect("/");
+      res.redirect("http://localhost:3000/");
     })(req, res, next);
   }
 );

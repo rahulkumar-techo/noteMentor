@@ -54,6 +54,7 @@ class QuestionController {
             res.write("data: [DONE]\n\n");
             res.end();
         } catch (error: any) {
+            console.error(error)
             return HandleResponse.error(res, error.message)
         }
     };
