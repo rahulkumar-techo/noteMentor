@@ -13,7 +13,7 @@ passport.use(
     {
       clientID: config.google.google_clientId,
       clientSecret: config.google.google_secret,
-      callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
+      callbackURL: "https://notementor.onrender.com/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
