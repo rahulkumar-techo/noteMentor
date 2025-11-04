@@ -25,50 +25,62 @@ class QuestionService {
       }
 
       // 🧩 2️⃣ Format for DB schema (supporting mcq, short, long)
-      const formattedQuestions = aiResults.map((q: any, index: number) => {
-        const baseData = {
-          creatorId: userId,
-          question: q.question || `Question ${index + 1}`,
-          explanation: q.explanation || "",
-          topic: data.topic || "general",
-          difficulty: data.difficulty || "medium",
-          type: data.questionType || "mcq",
-          attempts: [],
-          attemptsCount: 0,
-          isAI: true,
-          language: data.language || "English",
-        };
+// 🧩 2️⃣ Format for DB schema (supporting mcq, short, long)
+const formattedQuestions = aiResults.map((q: any, index: number) => {
+  const baseData = {
+    creatorId: userId,
+    question: q.question || `Question ${index + 1}`,
+    explanation: q.explanation || "",
+    topic: data.topic || "general",
+    difficulty: data.difficulty || "medium",
+    type: data.questionType || "mcq",
+    attempts: [],
+    attemptsCount: 0,
+    isAI: true,
+    language: data.language || "English",
+  };
 
-        // 🔹 Type-based mapping
-        switch (data.questionType) {
-          case "mcq":
-            return {
-              ...baseData,
-              mcq: {
-                options: q.options?.map((opt: string) => ({ text: opt })) || [],
-                correctAnswer: q.correctAnswer || null,
-              },
-            };
+  switch (data.questionType) {
+    case "mcq":
+      // 🧠 Normalize options: ensure it's always [{ text: "..." }]
+      const options =
+        Array.isArray(q.options)
+          ? q.options.map((opt: any) =>
+              typeof opt === "string" ? { text: opt } : { text: opt.text || "" }
+            )
+          : [];
 
-          case "short":
-            return {
-              ...baseData,
-              short: { expectedAnswer: q.expectedAnswer || "" },
-            };
+      return {
+        ...baseData,
+        mcq: {
+          options,
+          correctAnswer:
+            typeof q.correctAnswer === "string"
+              ? q.correctAnswer
+              : q.correctAnswer?.text || "",
+        },
+      };
 
-          case "long":
-            return {
-              ...baseData,
-              long: {
-                expectedAnswer: q.expectedAnswer || "",
-                wordLimit: q.wordLimit || 200,
-              },
-            };
+    case "short":
+      return {
+        ...baseData,
+        short: { expectedAnswer: q.expectedAnswer || "" },
+      };
 
-          default:
-            return baseData;
-        }
-      });
+    case "long":
+      return {
+        ...baseData,
+        long: {
+          expectedAnswer: q.expectedAnswer || "",
+          wordLimit: q.wordLimit || 200,
+        },
+      };
+
+    default:
+      return baseData;
+  }
+});
+
 
       // ⚙️ 3️⃣ Save to DB asynchronously (non-blocking)
       process.nextTick(async () => {

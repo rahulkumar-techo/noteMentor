@@ -10,6 +10,7 @@ import globalError_handler from "./shared/utils/globalError-handler";
 import questionRoute from "./routes/question.route";
 import path from "path";
 import { compressionMiddleware } from "./middlewares/compression.middleware";
+import resultRouter from "./routes/result.route";
 
 
 const app = express();
@@ -48,6 +49,7 @@ app.get("/", (req: Request, res: Response) => {
 // ---------------- Routes ----------------
 app.use(userRouter)
 app.use(questionRoute)
+app.use(resultRouter)
 
 // ---------------- 404 Handler ----------------
 app.use((req: Request, res: Response) => {

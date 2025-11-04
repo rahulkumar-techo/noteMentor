@@ -1,4 +1,4 @@
-import express from "express"
+import express, { Request, Response } from "express"
 import passport from "../strategies/google.strategy"
 import { IUserRequest } from "../types/express";
 import setTokenCookies from "../shared/utils/set-cookies";
@@ -49,6 +49,7 @@ userRouter.post("/login",userController.login)
 
 // Profile
 userRouter.put("/api/user/update-profile",autoRefreshAccessToken,authenticate,upload.single("avatar"),userController.updateProfile)
+userRouter.get("/api/get-profile",autoRefreshAccessToken,authenticate,userController.get_userProfile)
 
 // academic 
 userRouter.put("/api/user/academic",autoRefreshAccessToken,authenticate,academicController.editAcademic)
@@ -60,4 +61,37 @@ userRouter.put("/api/user/personalization", autoRefreshAccessToken,authenticate,
 // device settings
 userRouter.put("/api/user/settings",autoRefreshAccessToken,authenticate,deviceController.update)
 userRouter.get("/api/user/settings",autoRefreshAccessToken,authenticate,deviceController.get)
+
+userRouter.post(
+  "/logout",
+  autoRefreshAccessToken,
+  authenticate,
+  async (req: Request, res: Response) => {
+    try {
+      // 🧹 Clear authentication cookies
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: true, // set to false in dev if not using HTTPS
+        sameSite: "none", // for cross-origin cookies
+      });
+
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Logged out successfully.",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error while logging out.",
+      });
+    }
+  }
+);
 export default userRouter

@@ -3,6 +3,7 @@ import { RegisterInput, registerValidation, updateProfileValidation, registerVer
 import HandleResponse from "../shared/utils/handleResponse.utils";
 import userService from "../services/user.service";
 import setTokenCookies from "../shared/utils/set-cookies";
+import { UserModel } from "../models/user.model";
 
 class UserController {
 
@@ -89,6 +90,16 @@ class UserController {
 
             setTokenCookies({ res, accessToken, refreshToken, accessTTL, refreshTTL });
             return HandleResponse.success(res, null, "Logined")
+        } catch (error: any) {
+            console.error("❌ Login Controller Error:", error.message);
+            return HandleResponse.error(res, error.message);
+        }
+    }
+
+    async get_userProfile(req: Request, res: Response) {
+        try {
+            const user = await UserModel.findById({ _id: req?.user?._id }).select("-password");
+            return HandleResponse.success(res, user, "Logined")
         } catch (error: any) {
             console.error("❌ Login Controller Error:", error.message);
             return HandleResponse.error(res, error.message);
