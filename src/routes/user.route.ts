@@ -19,7 +19,7 @@ const userRouter = express()
 userRouter.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 userRouter.get(
-  "/auth/google/callback",
+  `${process.env.SERVER_URL!}/auth/google/callback`,
   (req, res, next) => {
     passport.authenticate("google", async (err: any, user: IUserRequest) => {
       if (err || !user) {
