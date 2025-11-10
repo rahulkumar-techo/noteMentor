@@ -1,46 +1,78 @@
+
+import cluster from "cluster";
+import os from "os";
+import process from "process";
 import app from "./app";
 import { db_connection } from "./config/db.config";
 import { config } from "./config/env.config";
 import { log } from "./shared/logs/logger";
-import cluster from "cluster";
-import os from "os";
 
+const PORT = config.port || 8000;
+const isPrimary = cluster.isPrimary;
 
-const PORT = config.port;
+// leave one CPU for system
+const totalCPUs = Math.max(os.cpus().length - 1, 1); 
 
+// Global Error Handlers
 
-process.on('uncaughtException', err => {
-  log.error('💥 Uncaught Exception:', err);
+process.on("uncaughtException", (err) => {
+  log.error(` Uncaught Exception: ${err.message}`);
+  log.error(err.stack);
+  process.exit(1); // exit immediately
 });
 
-process.on('unhandledRejection', err => {
-  log.error('💥 Unhandled Rejection:', err);
+process.on("unhandledRejection", (reason: any) => {
+  log.error(` Unhandled Rejection: ${reason}`);
 });
 
 
-// Cluster setup can be added here in the future
-const totalCPUs = os.cpus().length;
-console.log(os.cpus().length);
+// Clustered Server Setup
 
-if(cluster.isPrimary){
-  for(let i = 0; i < totalCPUs; i++){
-    cluster.fork();
-  }
+if (isPrimary) {
+  log.info(`🧠 Master PID: ${process.pid}`);
+  log.info(`🧩 Spawning ${totalCPUs} workers...`);
+
+  // Fork worker processes
+  for (let i = 0; i < totalCPUs; i++) cluster.fork();
+
+  // Handle worker exit and respawn
   cluster.on("exit", (worker, code, signal) => {
-    log.info(`Worker ${worker.process.pid} died. Forking a new worker.`);
+    log.error(
+      `⚰️ Worker ${worker.process.pid} exited (code: ${code}, signal: ${signal}). Restarting...`
+    );
     cluster.fork();
   });
-}
-else {
-(async () => {
-  try {
-    await db_connection();
-    app.listen(PORT, () => {
-      log.info(`📍Server started on port ${PORT} in ${config.nodeEnv} mode`);
-    });
-  } catch (error: any) {
-    log.error(`Failed to start server:\n ${error.message}`);
-  }
-})();
 
+} else {
+  
+  //  🚀 Worker Initialization
+  
+  (async () => {
+    try {
+      await db_connection();
+
+      const server = app.listen(PORT, () => {
+        log.info(
+          ` Worker ${process.pid} | Server running on port ${PORT} (${config.nodeEnv})`
+        );
+      });
+
+      
+      //  * 🧹 Graceful Shutdown
+      
+      const gracefulShutdown = () => {
+        log.warn(`🛑 Worker ${process.pid} shutting down gracefully...`);
+        server.close(() => {
+          log.info(`💤 Worker ${process.pid} terminated.`);
+          process.exit(0);
+        });
+      };
+
+      process.on("SIGTERM", gracefulShutdown);
+      process.on("SIGINT", gracefulShutdown);
+    } catch (error: any) {
+      log.error(`❌ Worker ${process.pid} failed to start: ${error.message}`);
+      process.exit(1);
+    }
+  })();
 }
