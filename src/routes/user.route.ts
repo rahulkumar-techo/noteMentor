@@ -37,12 +37,7 @@ userRouter.get(
   }
 );
 
-userRouter.get("/me",autoRefreshAccessToken,authenticate,(req,res)=>{
-   return res.status(201).json({
-        success:true,
-        user:req?.user
-    })
-})
+userRouter.get("/me",autoRefreshAccessToken,authenticate,userController.get_userProfile)
 userRouter.post("/register",userController.registerUser)
 userRouter.post("/otp-verification",userController.registerVerification)
 userRouter.post("/login",userController.login)
