@@ -6,7 +6,7 @@
 import { Request, Response } from "express";
 import { IUser, cloudinaryFile } from "../interfaces/user.interface";
 import { UserModel } from "../models/user.model";
-import {FileManager}  from "../shared/utils/FileManger";
+import { FileManager } from "../shared/utils/FileManger";
 import { LoginValidationInput, RegisterInput, RegisterVerificationInput } from "../validations/user.validation";
 import { helperService } from "./helper.service";
 import HandleResponse from "../shared/utils/handleResponse.utils";
@@ -26,62 +26,62 @@ interface IUpdateProfile {
 class UserService {
   private fileManager = new FileManager();
   async updateProfile(
-  userId: string,
-  { username, fullname, avatar }: IUpdateProfile
-): Promise<Partial<IUser> | null> {
-  try {
-    const user = await UserModel.findById(userId).select("avatar username fullname");
-    if (!user) throw new Error("User not found");
+    userId: string,
+    { username, fullname, avatar }: IUpdateProfile
+  ): Promise<Partial<IUser> | null> {
+    try {
+      const user = await UserModel.findById(userId).select("avatar username fullname");
+      if (!user) throw new Error("User not found");
 
-    const updateData: Partial<IUser> = {};
+      const updateData: Partial<IUser> = {};
 
-    // ✅ Conditionally update username (check for uniqueness)
-    if (username && username !== user.username) {
-      const newUsername = await helperService.checkAndGenUsername(username);
-      updateData.username = newUsername;
-    }
-
-    // ✅ Conditionally update fullname
-    if (fullname && fullname !== user.fullname) {
-      updateData.fullname = fullname;
-    }
-
-    // ✅ Conditionally update avatar
-    if (avatar) {
-      try {
-        const result = await this.fileManager.updateFile(
-          user.avatar?.public_id || "",
-          avatar,
-          `/noteGenie/avatar/${userId}`
-        );
-
-        updateData.avatar = {
-          secure_url: result.data.secure_url,
-          public_id: result.data.public_id,
-          bytes: String(result.data.bytes),
-        };
-      } catch (error: any) {
-        console.error(`⚠️ Cloudinary update error: ${error.message}`);
+      // ✅ Conditionally update username (check for uniqueness)
+      if (username && username !== user.username) {
+        const newUsername = await helperService.checkAndGenUsername(username);
+        updateData.username = newUsername;
       }
+
+      // ✅ Conditionally update fullname
+      if (fullname && fullname !== user.fullname) {
+        updateData.fullname = fullname;
+      }
+
+      // ✅ Conditionally update avatar
+      if (avatar) {
+        try {
+          await this.fileManager.deleteFiles([user?.avatar?.public_id])
+          const uploaded = await this.fileManager.uploadFiles(
+            [avatar],
+            `/noteGenie/avatar/${userId}`
+          );
+          const avatarFile = uploaded?.data?.[0];
+          updateData.avatar = {
+            secure_url: avatarFile?.secure_url,
+            public_id: avatarFile?.public_id,
+            bytes: String(avatarFile?.bytes),
+          };
+        } catch (error: any) {
+          console.error(`⚠️ Cloudinary update error: ${error.message}`);
+        }
+      }
+
+      // ❌ Prevent updating if no new data is provided
+      if (Object.keys(updateData).length === 0) {
+        throw new Error("No fields provided for update");
+      }
+
+      // ✅ Update user document safely
+      const updatedUser = await UserModel.findByIdAndUpdate(userId, updateData, {
+        new: true,
+        select: "username fullname avatar",
+      });
+
+      return updatedUser ? updatedUser.toObject() : null;
+    } catch (error) {
+      console.error("❌ Error updating profile:", error);
+      return null;
     }
-
-    // ❌ Prevent updating if no new data is provided
-    if (Object.keys(updateData).length === 0) {
-      throw new Error("No fields provided for update");
-    }
-
-    // ✅ Update user document safely
-    const updatedUser = await UserModel.findByIdAndUpdate(userId, updateData, {
-      new: true,
-      select: "username fullname avatar",
-    });
-
-    return updatedUser ? updatedUser.toObject() : null;
-  } catch (error) {
-    console.error("❌ Error updating profile:", error);
-    return null;
   }
-}
   // ------------- Register User ---------------------
   async register(data: RegisterInput): Promise<Partial<IUser> | null> {
     try {
