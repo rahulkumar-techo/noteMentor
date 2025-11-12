@@ -11,6 +11,7 @@ import questionRoute from "./routes/question.route";
 import path from "path";
 import { compressionMiddleware } from "./middlewares/compression.middleware";
 import resultRouter from "./routes/result.route";
+import noteRouter from "./routes/note.route";
 
 
 const app = express();
@@ -50,6 +51,7 @@ app.get("/", (req: Request, res: Response) => {
 app.use(userRouter)
 app.use(questionRoute)
 app.use(resultRouter)
+app.use(noteRouter)
 
 // ---------------- 404 Handler ----------------
 app.use((req: Request, res: Response) => {

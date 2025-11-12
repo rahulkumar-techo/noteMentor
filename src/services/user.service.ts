@@ -6,7 +6,7 @@
 import { Request, Response } from "express";
 import { IUser, cloudinaryFile } from "../interfaces/user.interface";
 import { UserModel } from "../models/user.model";
-import { FileManger } from "../shared/utils/FileManger";
+import {FileManager}  from "../shared/utils/FileManger";
 import { LoginValidationInput, RegisterInput, RegisterVerificationInput } from "../validations/user.validation";
 import { helperService } from "./helper.service";
 import HandleResponse from "../shared/utils/handleResponse.utils";
@@ -24,7 +24,7 @@ interface IUpdateProfile {
 }
 
 class UserService {
-  private fileManager = new FileManger();
+  private fileManager = new FileManager();
   async updateProfile(
   userId: string,
   { username, fullname, avatar }: IUpdateProfile
@@ -58,7 +58,7 @@ class UserService {
         updateData.avatar = {
           secure_url: result.data.secure_url,
           public_id: result.data.public_id,
-          bytes: result.data.bytes,
+          bytes: String(result.data.bytes),
         };
       } catch (error: any) {
         console.error(`⚠️ Cloudinary update error: ${error.message}`);

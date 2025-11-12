@@ -1,91 +1,67 @@
 // src/shared/utils/file-upload/fileManager.ts
-// Description: Optimized and safe service layer for file operations (Cloudinary + Sharp)
+// Description: Optimized, type-safe file service layer for Cloudinary (no Sharp)
 
-import sharp from "sharp";
+import NoteModel from "../../models/note.model";
 import { deleteFromCloudinary, uploadToCloudinary } from "./upload-cloudinary.utils";
 
+type CloudinaryUploadResult = {
+  secure_url: string;
+  public_id: string;
+  bytes?: number;
+  resource_type?: string;
+};
 
-export class FileManger {
-    private MAX_SIZE_MB = 10;
+export class FileManager {
+  private MAX_SIZE_MB = 10;
 
-    /**
-     * Optimize image before uploading
-     */
-    private async optimizeBuffer(buffer: Buffer) {
-        return await sharp(buffer)
-            .resize(512, 512, { fit: "cover" })
-            .jpeg({ quality: 80 })
-            .toBuffer();
+  /**
+   * Upload multiple files to Cloudinary (parallel)
+   */
+  async uploadFiles(files: Express.Multer.File[], folder: string) {
+    const start = performance.now();
+
+    if (!files || files.length === 0) {
+      return { responseTimeMs: 0, data: [] as CloudinaryUploadResult[] };
     }
 
-    /**
-     * Upload multiple files to Cloudinary (parallel)
-     */
-    async uploadFiles(files: Express.Multer.File[], folder: string) {
-        const start = performance.now();
-
-        const results = await Promise.all(
-            files.map(async (file) => {
-                if (file.size > this.MAX_SIZE_MB * 1024 * 1024) {
-                    throw new Error(`File too large. Max ${this.MAX_SIZE_MB} MB`);
-                }
-                const optimized = await this.optimizeBuffer(file.buffer);
-                return uploadToCloudinary(optimized, folder);
-            })
-        );
-
-        return {
-            responseTimeMs: Math.round(performance.now() - start),
-            data: results.map((r: any) => ({
-                secure_url: r.secure_url,
-                public_id: r.public_id,
-                bytes: r.bytes,
-            })),
-        };
-    }
-
-    /**
-     * Replace existing file in Cloudinary
-     */
-    async updateFile(public_id: string, file: Express.Multer.File, folder: string) {
-        const start = performance.now();
-
-        // 🧩 Validate file size before upload
+    const results = await Promise.all(
+      files.map(async (file) => {
         if (file.size > this.MAX_SIZE_MB * 1024 * 1024) {
-            throw new Error(`File too large. Max ${this.MAX_SIZE_MB} MB`);
+          throw new Error(`File too large. Max ${this.MAX_SIZE_MB} MB`);
         }
 
-        // 🪄 Optimize the image
-        const optimized = await this.optimizeBuffer(file.buffer);
-
-        // ⚡ Delete old & upload new concurrently
-        const [_, uploadResult]: any = await Promise.all([
-            public_id ? deleteFromCloudinary(public_id) : Promise.resolve(),
-            uploadToCloudinary(optimized, folder),
-        ]);
+        // ✅ Explicitly type the response
+        const uploaded = (await uploadToCloudinary(file.buffer, folder)) as CloudinaryUploadResult;
 
         return {
-            responseTimeMs: Math.round(performance.now() - start),
-            data: {
-                secure_url: uploadResult.secure_url,
-                public_id: uploadResult.public_id,
-                bytes: uploadResult.bytes,
-            },
+          secure_url: uploaded.secure_url,
+          public_id: uploaded.public_id,
+          bytes: uploaded.bytes ?? 0,
         };
+      })
+    );
+
+    return {
+      responseTimeMs: Math.round(performance.now() - start),
+      data: results,
+    };
+  }
+
+  /**
+   * Delete multiple files from Cloudinary (parallel)
+   */
+  async deleteFiles(public_ids: string[]) {
+    const start = performance.now();
+
+    if (!public_ids || public_ids.length === 0) {
+      return { responseTimeMs: 0, data: [] };
     }
 
-    /**
-     * Delete multiple files from Cloudinary (parallel)
-     */
-    async deleteFiles(public_ids: string[]) {
-        const start = performance.now();
-        const results = await Promise.all(
-            public_ids.map((id) => deleteFromCloudinary(id))
-        );
+    const results = await Promise.all(public_ids.map((id) => deleteFromCloudinary(id)));
 
-        return {
-            responseTimeMs: Math.round(performance.now() - start),
-            data: results,
-        };
-    }
+    return {
+      responseTimeMs: Math.round(performance.now() - start),
+      data: results,
+    };
+  }
 }

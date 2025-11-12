@@ -1,6 +1,13 @@
 import multer from "multer";
 
-const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+const IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/avif"
+];
 
 const VIDEO_TYPES = [
   "video/mp4",
@@ -9,25 +16,35 @@ const VIDEO_TYPES = [
   "video/3gpp",
   "video/mkv",
   "video/webm",
-  "video/ogg"
+  "video/ogg",
 ];
 
-// Add PDF MIME type
 const PDF_TYPES = ["application/pdf"];
 
-const storage = multer.memoryStorage(); // store files in memory
+const storage = multer.memoryStorage();
 
 export const upload = multer({
   storage,
   limits: {
     fileSize: 50 * 1024 * 1024, // 50 MB per file
-    files: 10,                  // max 10 files total
-    // fields: 5                   // max 5 text fields
+    files: 13,                  // max 10 files
   },
   fileFilter: (req, file, cb) => {
-    if (!IMAGE_TYPES.includes(file.mimetype) && !VIDEO_TYPES.includes(file.mimetype) && !PDF_TYPES.includes(file.mimetype)) {
-      return cb(new Error("Only images or videos are allowed"));
+    const mimetype = file.mimetype.toLowerCase();
+
+    const isAllowed =
+      IMAGE_TYPES.includes(mimetype) ||
+      VIDEO_TYPES.includes(mimetype) ||
+      PDF_TYPES.includes(mimetype);
+
+    if (!isAllowed) {
+      return cb(
+        new Error(
+          `Invalid file type (${mimetype}). Only images, videos, or PDFs are allowed.`
+        )
+      );
     }
+
     cb(null, true);
   },
 });
