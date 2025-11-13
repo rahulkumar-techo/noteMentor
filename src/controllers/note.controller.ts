@@ -16,11 +16,11 @@ class NoteController {
     this.updateNote = this.updateNote.bind(this);
     this.getUserNotes = this.getUserNotes.bind(this);
     this.deleteNoteFiles = this.deleteNoteFiles.bind(this);
+    this.deleteNote = this.deleteNote.bind(this);
   }
 
   async uploadNotes(req: Request, res: Response) {
     try {
-
       const parseResult = noteValidationSchema.safeParse(req.body);
       if (!parseResult.success) {
         return HandleResponse.error(
@@ -130,6 +130,19 @@ class NoteController {
     }
   };
 
+  async deleteNote(req: Request, res: Response) {
+    try {
+      const noteId = req?.params?.id;
+      if (!noteId) {
+        return HandleResponse.error(res, "Note id not provide")
+      }
+      const result = await this.noteService.deleteNote({ noteId });
+      return HandleResponse.success(res, null, result?.message);
+    } catch (error: any) {
+      console.error("❌ Delete Note Error:", error);
+      return HandleResponse.error(res, error.message || "Failed to delete note");
+    }
+  }
 
   async getNotes(req: Request, res: Response) {
     try {

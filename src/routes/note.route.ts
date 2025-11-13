@@ -32,6 +32,7 @@ noteRouter.put(
     noteController.updateNote
 );
 noteRouter.delete("/note/files", autoRefreshAccessToken, authenticate, noteController.deleteNoteFiles);
+noteRouter.delete("/note/delete/:id", autoRefreshAccessToken, authenticate, noteController.deleteNote);
 noteRouter.get("/note/all", autoRefreshAccessToken, authenticate, noteController.getNotes);
 noteRouter.get("/note/:id", autoRefreshAccessToken, authenticate, noteController.getNoteById);
 noteRouter.get("/note/user", autoRefreshAccessToken, authenticate, noteController.getUserNotes);

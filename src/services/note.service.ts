@@ -1,6 +1,9 @@
+import redis from "../config/client-redis";
 import NoteModel from "../models/note.model";
+import { UserModel } from "../models/user.model";
 import { FileManager } from "../shared/utils/FileManger";
 import { NoteInputSetting } from "../validations/note.validation";
+import { notesCache } from "./cache/notesCache";
 
 interface INoteService {
   userId?: string;
@@ -19,13 +22,13 @@ class NoteService {
     userId,
     title,
     descriptions,
-    noteImages,
-    notePdfs,
+    noteImages = [],
+    notePdfs = [],
     thumbnail,
   }: INoteService) {
     try {
       // 🧩 Create initial note (so frontend gets a quick response)
-      const newNote = await NoteModel.create({
+      const note = await NoteModel.create({
         userId,
         title,
         descriptions,
@@ -33,80 +36,54 @@ class NoteService {
       });
 
       // ⚙️ Prepare upload tasks (in parallel, non-blocking)
-      const uploadTasks: Promise<any>[] = [];
+      const [uploadedImages, uploadedPdfs, uploadedThumb] = await Promise.all([
+        noteImages.length
+          ? this.filemanager.uploadFiles(noteImages, `noteImages/${userId}/`)
+          : Promise.resolve({ data: [] }),
+        notePdfs.length
+          ? this.filemanager.uploadFiles(notePdfs, `notePdfs/${userId}/`)
+          : Promise.resolve({ data: [] }),
+        thumbnail
+          ? this.filemanager.uploadFiles([thumbnail], `noteThumb/${userId}/`)
+          : Promise.resolve({ data: [] }),
+      ]);
 
-      // 🖼️ Images upload
-      if (noteImages?.length) {
-        uploadTasks.push(
-          this.filemanager
-            .uploadFiles(noteImages, `noteImages/${userId}/`)
-            .then(async (uploaded) => {
-              if (uploaded?.data?.length) {
-                await NoteModel.findByIdAndUpdate(newNote._id, {
-                  $set: { noteImages: uploaded.data },
-                });
-              }
-            })
-            .catch((err) => console.error("❌ Image upload failed:", err))
-        );
+      // ✅ Merge old + new uploads
+      const updatedImages = [
+        ...(note.noteImages || []),
+        ...(uploadedImages?.data || []),
+      ];
+
+      const updatedPdfs = [
+        ...(note.notePdfs || []),
+        ...(uploadedPdfs?.data || []),
+      ];
+
+      const updatedData: any = {
+        title,
+        descriptions,
+        noteImages: updatedImages,
+        notePdfs: updatedPdfs,
+      };
+
+      // 🌄 Update thumbnail (single file)
+      if (uploadedThumb?.data?.[0]) {
+        const thumb = uploadedThumb.data[0];
+        updatedData.thumbnail = {
+          secure_url: thumb.secure_url,
+          public_id: thumb.public_id,
+          bytes: thumb.bytes ?? 0,
+        };
       }
 
-      // 📄 PDFs upload
-      if (notePdfs?.length) {
-        uploadTasks.push(
-          this.filemanager
-            .uploadFiles(notePdfs, `notePdfs/${userId}/`)
-            .then(async (uploaded) => {
-              if (uploaded?.data?.length) {
-                await NoteModel.findByIdAndUpdate(newNote._id, {
-                  $set: { notePdfs: uploaded.data },
-                });
-              }
-            })
-            .catch((err) => console.error("❌ PDF upload failed:", err))
-        );
-      }
+      // ✅ Save once
+      const updatedNote = await NoteModel.findByIdAndUpdate(
+        { _id: note?._id },
+        { $set: updatedData },
+        { new: true }
+      );
 
-      // 🌄 Thumbnail upload
-      if (thumbnail) {
-        uploadTasks.push(
-          this.filemanager
-            .uploadFiles([thumbnail], `noteThumb/${userId}/`)
-            .then(async (uploaded) => {
-              const thumbData = uploaded?.data?.[0];
-              if (thumbData) {
-                await NoteModel.findByIdAndUpdate(newNote._id, {
-                  $set: {
-                    thumbnail: {
-                      secure_url: thumbData.secure_url,
-                      public_id: thumbData.public_id,
-                      bytes: thumbData.bytes,
-                    },
-                  },
-                });
-              }
-            })
-            .catch((err) => console.error("❌ Thumbnail upload failed:", err))
-        );
-      }
-
-      // 🧵 Run uploads in background (non-blocking)
-      Promise.all(uploadTasks)
-        .then(async () => {
-          await NoteModel.findByIdAndUpdate(newNote._id, {
-            $set: { status: "completed" },
-          });
-          console.log(`✅ Note ${newNote._id} upload finished.`);
-        })
-        .catch((err) => {
-          console.error("⚠️ Background upload error:", err);
-          NoteModel.findByIdAndUpdate(newNote._id, {
-            $set: { status: "failed" },
-          }).catch(() => { });
-        });
-
-      // ⚡ Return early — note saved, uploads in progress
-      return newNote;
+      return updatedNote;
     } catch (error: any) {
       console.error("❌ Error uploading note:", error);
       throw new Error(error.message || "Failed to upload note");
@@ -133,55 +110,55 @@ class NoteService {
       if (totalImages > 10) throw new Error("Only 10 images can be uploaded in total");
       if (totalPdfs > 2) throw new Error("Only 2 PDFs can be uploaded in total");
 
-        // 🧠 Collect all new uploads (in parallel)
-    const [uploadedImages, uploadedPdfs, uploadedThumb] = await Promise.all([
-      noteImages.length
-        ? this.filemanager.uploadFiles(noteImages, `noteImages/${userId}/`)
-        : Promise.resolve({ data: [] }),
-      notePdfs.length
-        ? this.filemanager.uploadFiles(notePdfs, `notePdfs/${userId}/`)
-        : Promise.resolve({ data: [] }),
-      thumbnail
-        ? this.filemanager.uploadFiles([thumbnail], `noteThumb/${userId}/`)
-        : Promise.resolve({ data: [] }),
-    ]);
+      // 🧠 Collect all new uploads (in parallel)
+      const [uploadedImages, uploadedPdfs, uploadedThumb] = await Promise.all([
+        noteImages.length
+          ? this.filemanager.uploadFiles(noteImages, `noteImages/${userId}/`)
+          : Promise.resolve({ data: [] }),
+        notePdfs.length
+          ? this.filemanager.uploadFiles(notePdfs, `notePdfs/${userId}/`)
+          : Promise.resolve({ data: [] }),
+        thumbnail
+          ? this.filemanager.uploadFiles([thumbnail], `noteThumb/${userId}/`)
+          : Promise.resolve({ data: [] }),
+      ]);
 
-       // ✅ Merge old + new uploads
-    const updatedImages = [
-      ...(note.noteImages || []),
-      ...(uploadedImages?.data || []),
-    ];
+      // ✅ Merge old + new uploads
+      const updatedImages = [
+        ...(note.noteImages || []),
+        ...(uploadedImages?.data || []),
+      ];
 
-    const updatedPdfs = [
-      ...(note.notePdfs || []),
-      ...(uploadedPdfs?.data || []),
-    ];
+      const updatedPdfs = [
+        ...(note.notePdfs || []),
+        ...(uploadedPdfs?.data || []),
+      ];
 
-        const updatedData: any = {
-      title,
-      descriptions,
-      noteImages: updatedImages,
-      notePdfs: updatedPdfs,
-    };
-
-    // 🌄 Update thumbnail (single file)
-    if (uploadedThumb?.data?.[0]) {
-      const thumb = uploadedThumb.data[0];
-      updatedData.thumbnail = {
-        secure_url: thumb.secure_url,
-        public_id: thumb.public_id,
-        bytes: thumb.bytes ?? 0,
+      const updatedData: any = {
+        title,
+        descriptions,
+        noteImages: updatedImages,
+        notePdfs: updatedPdfs,
       };
-    }
+
+      // 🌄 Update thumbnail (single file)
+      if (uploadedThumb?.data?.[0]) {
+        const thumb = uploadedThumb.data[0];
+        updatedData.thumbnail = {
+          secure_url: thumb.secure_url,
+          public_id: thumb.public_id,
+          bytes: thumb.bytes ?? 0,
+        };
+      }
 
       // ✅ Save once
-    const updatedNote = await NoteModel.findByIdAndUpdate(
-      noteId,
-      { $set: updatedData },
-      { new: true }
-    );
+      const updatedNote = await NoteModel.findByIdAndUpdate(
+        noteId,
+        { $set: updatedData },
+        { new: true }
+      );
 
-    return updatedNote;
+      return updatedNote;
     } catch (error: any) {
       console.error("❌ updateNote Error:", error);
       throw new Error(error.message || "Failed to update note");
@@ -240,12 +217,48 @@ class NoteService {
     }
   }
 
+  async deleteNote({ noteId }: { noteId: string }) {
+    try {
+      const note = await NoteModel.findById({ _id: noteId });
+      // clear from redis
+      await notesCache.clearUserNotes(String(note?.userId))
+
+      process.nextTick(async () => {
+        // clear from cloudinary
+        if (note?.noteImages && note?.noteImages.length > 0) {
+          const delImages = note?.noteImages?.map((items) => items.public_id)
+          await this.filemanager.deleteFiles(delImages)
+        }
+        if (note?.notePdfs && note?.notePdfs.length > 0) {
+          const delPdfs = note?.notePdfs?.map((items) => items.public_id)
+          await this.filemanager.deleteFiles(delPdfs)
+        }
+        if (note?.thumbnail) {
+          await this.filemanager.deleteFiles([note?.thumbnail?.public_id])
+        }
+      })
+      await NoteModel.deleteOne({ _id: noteId });
+      return {
+        message: "Note deleted"
+      }
+    } catch (error: any) {
+      console.error("❌ Error fetching notes:", error);
+      throw new Error(error.message || "Failed to fetch notes");
+    }
+  }
+
 
   async getNotes(userId: string, page = 1, limit = 10) {
     try {
       if (!userId) throw new Error("User ID required");
 
       const skip = (page - 1) * limit;
+
+      const cached = await notesCache.getNotes(userId, page, limit);
+      if (cached) {
+        console.log("⚡ Using cache");
+        return cached;
+      }
 
       const [notes, total] = await Promise.all([
         NoteModel.find({ userId })
@@ -254,13 +267,16 @@ class NoteService {
           .limit(limit),
         NoteModel.countDocuments({ userId }),
       ]);
-
-      return {
+      const finalData = {
         notes,
         total,
         currentPage: page,
         totalPages: Math.ceil(total / limit),
       };
+
+      // 3. Save result into cache
+      await notesCache.setNotes(userId, page, limit, finalData);
+      return finalData
     } catch (error: any) {
       console.error("❌ Error fetching notes:", error);
       throw new Error(error.message || "Failed to fetch notes");
