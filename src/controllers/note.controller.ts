@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import HandleResponse from "../shared/utils/handleResponse.utils";
 import { NoteInputSetting, noteSettingValidation, noteValidationSchema } from "../validations/note.validation";
 import NoteService from "../services/note.service";
+import { cleanupUploadedFiles } from "../shared/utils/cleanupFileUpload";
 
 class NoteController {
   private noteService = new NoteService();
@@ -50,9 +51,10 @@ class NoteController {
         notePdfs,
         thumbnail,
       });
-
+      cleanupUploadedFiles(req.files as any)
       return HandleResponse.success(res, newNote, "Note uploaded successfully");
     } catch (error: any) {
+      cleanupUploadedFiles(req.files as any)
       console.error("❌ Upload Error:", error);
       return HandleResponse.error(res, error.message || "Something went wrong");
     }
@@ -159,6 +161,8 @@ class NoteController {
         Number(limit)
       );
 
+      console.log(result.notes)
+
       return HandleResponse.success(res, result, "Notes fetched successfully");
     } catch (error: any) {
       console.error("❌ Get Notes Error:", error);
@@ -205,7 +209,6 @@ class NoteController {
       return HandleResponse.error(res, error.message || "Something went wrong");
     }
   }
-
 }
 
 export default new NoteController();

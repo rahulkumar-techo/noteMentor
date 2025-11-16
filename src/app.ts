@@ -12,6 +12,9 @@ import path from "path";
 import { compressionMiddleware } from "./middlewares/compression.middleware";
 import resultRouter from "./routes/result.route";
 import noteRouter from "./routes/note.route";
+import feedRouter from "./routes/feed.route";
+import { cleanupUploadedFiles } from "./shared/utils/cleanupFileUpload";
+import commentRouter from "./routes/comment.route";
 
 
 const app = express();
@@ -52,11 +55,22 @@ app.use(userRouter)
 app.use(questionRoute)
 app.use(resultRouter)
 app.use(noteRouter)
+app.use(feedRouter)
+app.use(commentRouter)
 
 // ---------------- 404 Handler ----------------
 app.use((req: Request, res: Response) => {
   res.status(404).json({ message: "Route not found" });
 });
+
+app.use((req, res, next) => {
+  req.on("aborted", () => {
+    console.warn("⚠️ Request aborted by user — cleaning up temp files");
+    cleanupUploadedFiles((req as any).files);
+  });
+  next();
+});
+
 
 // error handler
 app.use(globalError_handler)

@@ -4,6 +4,8 @@ import autoRefreshAccessToken from "../middlewares/auto-refresh";
 import { authenticate } from "../middlewares/isAuthenticated";
 import { upload } from "../middlewares/multer.middleware";
 import noteController from "../controllers/note.controller";
+import { multerErrorHandler } from "../middlewares/multerErrorHandler";
+import commentController from "../controllers/comment.controller";
 
 // Initialize
 const noteRouter = express.Router();
@@ -18,6 +20,7 @@ noteRouter.post(
         { name: "noteImages", maxCount: 10 },
         { name: "notePdfs", maxCount: 2 },
     ]),
+    multerErrorHandler,
     noteController.uploadNotes
 );
 noteRouter.put(
@@ -37,4 +40,6 @@ noteRouter.get("/note/all", autoRefreshAccessToken, authenticate, noteController
 noteRouter.get("/note/:id", autoRefreshAccessToken, authenticate, noteController.getNoteById);
 noteRouter.get("/note/user", autoRefreshAccessToken, authenticate, noteController.getUserNotes);
 noteRouter.patch("/note/settings/:id", autoRefreshAccessToken, authenticate, noteController.noteSetting);
+
+
 export default noteRouter;

@@ -1,10 +1,33 @@
-import { model, Schema, Types } from "mongoose";
+// models/comment.model.ts
+import mongoose, { Schema, model, Document, Types } from "mongoose";
 
-const CommentSchema = new Schema({
-  postId: { type: Types.ObjectId, ref: "Post", required: true, index: true },
-  userId: { type: Types.ObjectId, ref: "User", required: true },
-  text: { type: String, required: true },
-  parentCommentId: { type: Types.ObjectId, ref: "Comment", default: null }
-}, { timestamps: true });
+export interface IComment extends Document {
+  noteId: Types.ObjectId|null;
+  userId: Types.ObjectId|null;
+  message: string;
+  replyTo?: Types.ObjectId | null; // parent comment
+  createdAt: Date;
+  editedAt?: Date;
+}
 
-export default model("Comment", CommentSchema);
+const CommentSchema = new Schema<IComment>(
+  {
+    noteId: { type: Types.ObjectId, ref: "Note", required: true },
+    userId: { type: Types.ObjectId, ref: "User", required: true },
+    message: { type: String, required: true, maxlength: 500, trim: true },
+    replyTo: { type: Types.ObjectId, ref: "Comment", default: null },
+    editedAt: { type: Date },
+  },
+  {
+    timestamps: { createdAt: true, updatedAt: false },
+    collection: "comments",
+  }
+);
+
+// Indexing for fast retrieval
+CommentSchema.index({ noteId: 1 });
+CommentSchema.index({ replyTo: 1 });
+CommentSchema.index({ createdAt: -1 });
+
+const CommentModel = model<IComment>("Comment", CommentSchema);
+export default CommentModel;

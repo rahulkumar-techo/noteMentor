@@ -29,7 +29,7 @@ class NoteService {
     try {
       // 🧩 Create initial note (so frontend gets a quick response)
       const note = await NoteModel.create({
-        userId,
+        authorId:userId,
         title,
         descriptions,
         status: "processing", // optional: show upload progress in frontend
@@ -221,7 +221,7 @@ class NoteService {
     try {
       const note = await NoteModel.findById({ _id: noteId });
       // clear from redis
-      await notesCache.clearUserNotes(String(note?.userId))
+      await notesCache.clearUserNotes(String(note?.authorId))
 
       process.nextTick(async () => {
         // clear from cloudinary
@@ -261,7 +261,7 @@ class NoteService {
       }
 
       const [notes, total] = await Promise.all([
-        NoteModel.find({ userId })
+        NoteModel.find({ authorId:userId })
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit),
@@ -285,7 +285,10 @@ class NoteService {
 
   async getNoteById(id: string) {
     try {
-      return await NoteModel.findById({ _id: id }).populate("userId", "fullname")
+        const note = await NoteModel
+    .findById(id)
+    .populate("authorId", "fullname avatar");
+    return note
     } catch (error: any) {
       console.error("❌ Error fetching notes:", error);
       throw new Error(error.message || "Failed to fetch notes");
@@ -294,7 +297,7 @@ class NoteService {
 
   async getUserNotes(id: string) {
     try {
-      const userNotes = await NoteModel.findById({ userId: id })
+      const userNotes = await NoteModel.findById({ authorId: id })
       if (!userNotes) {
         throw new Error("failed to get User Notes")
       }
@@ -335,6 +338,9 @@ class NoteService {
       throw new Error(error?.message || "Failed to update note settings");
     }
   }
+
+
+
 
 }
 

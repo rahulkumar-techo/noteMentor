@@ -3,7 +3,7 @@
 
 import NoteModel from "../../models/note.model";
 import { deleteFromCloudinary, uploadToCloudinary } from "./upload-cloudinary.utils";
-
+import fs from "fs"
 type CloudinaryUploadResult = {
   secure_url: string;
   public_id: string;
@@ -30,9 +30,10 @@ export class FileManager {
           throw new Error(`File too large. Max ${this.MAX_SIZE_MB} MB`);
         }
 
+        const fileBuffer = fs.readFileSync(file.path);
         // ✅ Explicitly type the response
-        const uploaded = (await uploadToCloudinary(file.buffer, folder)) as CloudinaryUploadResult;
-
+        const uploaded = (await uploadToCloudinary(fileBuffer, folder)) as CloudinaryUploadResult;
+        fs.unlinkSync(file.path);
         return {
           secure_url: uploaded.secure_url,
           public_id: uploaded.public_id,

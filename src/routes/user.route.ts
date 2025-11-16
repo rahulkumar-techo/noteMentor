@@ -8,7 +8,7 @@ import { Types } from "mongoose";
 import autoRefreshAccessToken from "../middlewares/auto-refresh";
 import { authenticate } from "../middlewares/isAuthenticated";
 import { userController } from "../controllers/user.controller";
-import { upload } from "../middlewares/multer.middleware";
+// import { upload } from "../middlewares/multer.middleware";
 import { academicController } from "../controllers/academic.controller";
 import { personalizationController } from "../controllers/personalization.controller";
 import { deviceController } from "../controllers/device.controller";
@@ -43,7 +43,7 @@ userRouter.post("/otp-verification",userController.registerVerification)
 userRouter.post("/login",userController.login)
 
 // Profile
-userRouter.put("/api/user/update-profile",autoRefreshAccessToken,authenticate,upload.single("avatar"),userController.updateProfile)
+// userRouter.put("/api/user/update-profile",autoRefreshAccessToken,authenticate,upload.single("avatar"),userController.updateProfile)
 userRouter.get("/api/get-profile",autoRefreshAccessToken,authenticate,userController.get_userProfile)
 
 // academic 

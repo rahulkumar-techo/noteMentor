@@ -1,101 +1,81 @@
+// models/note.model.ts
 import mongoose, { Schema, model, Document } from "mongoose";
+import { Types } from "mongoose";
 
-// ✅ File schema for both images, PDFs, and thumbnails
 type NoteFile = {
   secure_url: string;
   public_id: string;
   bytes: string;
 };
 
-// ✅ Main Note interface
 export interface INote extends Document {
-  userId: mongoose.Types.ObjectId;
+  authorId: any;
   title: string;
   descriptions: string;
   thumbnail?: NoteFile;
   noteImages: NoteFile[];
   notePdfs: NoteFile[];
 
-  // ✅ Grouped note settings (privacy, sharing, permissions)
   settings: {
     visibility: "private" | "public" | "shared";
-    sharedWith?: mongoose.Types.ObjectId[];
+    sharedWith?: Types.ObjectId[];
     shareLink?: string | null;
     allowComments: boolean;
     allowDownloads: boolean;
+  };
+
+  stats: {
+    viewsCount: number;
+    likesCount: number;
+    commentsCount: number;
+  };
+
+  feed: {
+    score: number;
+    latestActivity: Date;
   };
 
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-// ✅ Reusable file schema
 const NoteFileSchema = new Schema<NoteFile>(
   {
-    secure_url: { type: String, required: true },
-    public_id: { type: String, required: true },
-    bytes: { type: String, required: true,default:"0" },
+    secure_url: String,
+    public_id: String,
+    bytes: { type: String, default: "0" },
   },
   { _id: false }
 );
 
-// ✅ Main note schema
 const NoteSchema = new Schema<INote>(
   {
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    descriptions: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    thumbnail: {
-      type: NoteFileSchema,
-      required: false,
-    },
-    noteImages: {
-      type: [NoteFileSchema],
-      default: [],
-    },
-    notePdfs: {
-      type: [NoteFileSchema],
-      default: [],
+    authorId: { type: Types.ObjectId, ref: "User", required: true },
+
+    title: { type: String, required: true, trim: true },
+    descriptions: { type: String, required: true, trim: true },
+
+    thumbnail: NoteFileSchema,
+    noteImages: [NoteFileSchema],
+    notePdfs: [NoteFileSchema],
+
+    settings: {
+      visibility: { type: String, enum: ["private", "public", "shared"], default: "private" },
+      sharedWith: [{ type: Types.ObjectId, ref: "User" }],
+      shareLink: { type: String, default: null },
+      allowComments: { type: Boolean, default: true },
+      allowDownloads: { type: Boolean, default: true },
     },
 
-    // ✅ Note settings grouped logically
-    settings: {
-      visibility: {
-        type: String,
-        enum: ["private", "public", "shared"],
-        default: "private",
-      },
-      sharedWith: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: "User",
-          default: [],
-        },
-      ],
-      shareLink: {
-        type: String,
-        default: null,
-      },
-      allowComments: {
-        type: Boolean,
-        default: false,
-      },
-      allowDownloads: {
-        type: Boolean,
-        default: true,
-      },
+    stats: {
+      viewsCount: { type: Number, default: 0 },
+      likesCount: { type: Number, default: 0 },
+      commentsCount: { type: Number, default: 0 },
+    },
+
+    feed: {
+      score: { type: Number, default: 0 },
+      latestActivity: { type: Date, default: Date.now },
     },
   },
   {
@@ -103,6 +83,11 @@ const NoteSchema = new Schema<INote>(
     collection: "notes",
   }
 );
+
+NoteSchema.index({ userId: 1, createdAt: -1 });
+NoteSchema.index({ "stats.likesCount": -1 });
+NoteSchema.index({ "feed.score": -1 });
+NoteSchema.index({ title: "text", descriptions: "text" });
 
 const NoteModel = model<INote>("Note", NoteSchema);
 export default NoteModel;
