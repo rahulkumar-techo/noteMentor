@@ -1,17 +1,23 @@
-// models/note.model.ts
-import mongoose, { Schema, model, Document } from "mongoose";
-import { Types } from "mongoose";
+// description: Note schema with improved file structure, indexes, and future-proof design
 
-type NoteFile = {
-  secure_url: string;
-  public_id: string;
-  bytes: string;
-};
+import mongoose, { Schema, model, Document, Types } from "mongoose";
+
+export interface NoteFile {
+  secure_url: string;       // temporary URL (private CDN)
+  public_id: string;        // cloudinary public id
+  bytes: number;            // size in bytes
+  format?: string;          // jpg, pdf, png, etc
+  resource_type?: string;   // image, raw, video
+  width?: number;           // optional for images
+  height?: number;          // optional for images
+  folder?: string;          // cloudinary folder
+}
 
 export interface INote extends Document {
-  authorId: any;
+  authorId: Types.ObjectId|null;
   title: string;
   descriptions: string;
+
   thumbnail?: NoteFile;
   noteImages: NoteFile[];
   notePdfs: NoteFile[];
@@ -41,11 +47,17 @@ export interface INote extends Document {
 
 const NoteFileSchema = new Schema<NoteFile>(
   {
-    secure_url: String,
-    public_id: String,
-    bytes: { type: String, default: "0" },
+    secure_url: { type: String, required: true },
+    public_id: { type: String, required: true },
+
+    bytes: { type: Number, default: 0 },
+    format: String,
+    resource_type: String,
+    width: Number,
+    height: Number,
+    folder: String,
   },
-  { _id: false }
+  { _id: false, timestamps: false }
 );
 
 const NoteSchema = new Schema<INote>(
@@ -60,7 +72,11 @@ const NoteSchema = new Schema<INote>(
     notePdfs: [NoteFileSchema],
 
     settings: {
-      visibility: { type: String, enum: ["private", "public", "shared"], default: "private" },
+      visibility: {
+        type: String,
+        enum: ["private", "public", "shared"],
+        default: "private",
+      },
       sharedWith: [{ type: Types.ObjectId, ref: "User" }],
       shareLink: { type: String, default: null },
       allowComments: { type: Boolean, default: true },
@@ -84,9 +100,18 @@ const NoteSchema = new Schema<INote>(
   }
 );
 
-NoteSchema.index({ userId: 1, createdAt: -1 });
+/* ---------- Indexes (Optimized) ---------- */
+
+// Fix incorrect index: userId → authorId
+NoteSchema.index({ authorId: 1, createdAt: -1 });
+
+// Popular notes sort
 NoteSchema.index({ "stats.likesCount": -1 });
+
+// Feed ranking
 NoteSchema.index({ "feed.score": -1 });
+
+// Full-text search (title + descriptions)
 NoteSchema.index({ title: "text", descriptions: "text" });
 
 const NoteModel = model<INote>("Note", NoteSchema);

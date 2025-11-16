@@ -1,45 +1,81 @@
-
 import express from "express";
+import noteController from "../controllers/note.controller";
 import autoRefreshAccessToken from "../middlewares/auto-refresh";
 import { authenticate } from "../middlewares/isAuthenticated";
-import { upload } from "../middlewares/multer.middleware";
-import noteController from "../controllers/note.controller";
-import { multerErrorHandler } from "../middlewares/multerErrorHandler";
-import commentController from "../controllers/comment.controller";
 
-// Initialize
+
 const noteRouter = express.Router();
 
+// generate signed upload token//GET /note/signed-upload?folder=noteImages/USER_ID
+noteRouter.get(
+  "/note/signed-upload",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.getSignedUploadToken
+);
 
+// create note (metadata only)
 noteRouter.post(
-    "/note/upload",
-    autoRefreshAccessToken,
-    authenticate,
-    upload.fields([
-        { name: "thumbnail", maxCount: 1 },
-        { name: "noteImages", maxCount: 10 },
-        { name: "notePdfs", maxCount: 2 },
-    ]),
-    multerErrorHandler,
-    noteController.uploadNotes
+  "/note/upload",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.uploadNotes
 );
-noteRouter.put(
-    "/note/update/:id",
-    autoRefreshAccessToken,
-    authenticate,
-    upload.fields([
-        { name: "thumbnail", maxCount: 1 },
-        { name: "noteImages", maxCount: 10 },
-        { name: "notePdfs", maxCount: 2 },
-    ]),
-    noteController.updateNote
-);
-noteRouter.delete("/note/files", autoRefreshAccessToken, authenticate, noteController.deleteNoteFiles);
-noteRouter.delete("/note/delete/:id", autoRefreshAccessToken, authenticate, noteController.deleteNote);
-noteRouter.get("/note/all", autoRefreshAccessToken, authenticate, noteController.getNotes);
-noteRouter.get("/note/:id", autoRefreshAccessToken, authenticate, noteController.getNoteById);
-noteRouter.get("/note/user", autoRefreshAccessToken, authenticate, noteController.getUserNotes);
-noteRouter.patch("/note/settings/:id", autoRefreshAccessToken, authenticate, noteController.noteSetting);
 
+// update note
+noteRouter.put(
+  "/note/update/:id",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.updateNote
+);
+
+// delete files
+noteRouter.post(
+  "/note/delete-files",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.deleteNoteFiles
+);
+
+// delete note
+noteRouter.delete(
+  "/note/delete/:id",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.deleteNote
+);
+
+// fetch notes
+noteRouter.get(
+  "/note/list",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.getNotes
+);
+
+// single note
+noteRouter.get(
+  "/note/:id",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.getNoteById
+);
+
+// user notes
+noteRouter.get(
+  "/user/notes",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.getUserNotes
+);
+
+// update settings
+noteRouter.put(
+  "/note/settings/:id",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.noteSetting
+);
 
 export default noteRouter;

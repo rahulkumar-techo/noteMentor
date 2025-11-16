@@ -1,123 +1,112 @@
 import { Request, Response } from "express";
 import HandleResponse from "../shared/utils/handleResponse.utils";
-import { NoteInputSetting, noteSettingValidation, noteValidationSchema } from "../validations/note.validation";
+import {
+  noteValidationSchema,
+  noteSettingValidation,
+  NoteInputSetting,
+} from "../validations/note.validation";
 import NoteService from "../services/note.service";
-import { cleanupUploadedFiles } from "../shared/utils/cleanupFileUpload";
 
 class NoteController {
   private noteService = new NoteService();
 
-
   constructor() {
-    // Bind both methods to keep correct `this` context
     this.uploadNotes = this.uploadNotes.bind(this);
     this.getNotes = this.getNotes.bind(this);
     this.getNoteById = this.getNoteById.bind(this);
-    this.noteSetting = this.noteSetting.bind(this);
     this.updateNote = this.updateNote.bind(this);
+    this.noteSetting = this.noteSetting.bind(this);
     this.getUserNotes = this.getUserNotes.bind(this);
     this.deleteNoteFiles = this.deleteNoteFiles.bind(this);
     this.deleteNote = this.deleteNote.bind(this);
+    this.getSignedUploadToken = this.getSignedUploadToken.bind(this);
+
   }
 
+  async getSignedUploadToken(req: Request, res: Response) {
+  try {
+    const userId = req.user?._id;
+    const folder = req.query.folder as string;
+
+    if (!folder) {
+      return HandleResponse.error(res, "Folder is required");
+    }
+
+    const token = await this.noteService.getSignedUpload(folder);
+
+    return HandleResponse.success(res, token, "Signed upload token generated");
+  } catch (err: any) {
+    return HandleResponse.error(res, err.message);
+  }
+}
+
+
+  // create note
   async uploadNotes(req: Request, res: Response) {
     try {
-      const parseResult = noteValidationSchema.safeParse(req.body);
-      if (!parseResult.success) {
-        return HandleResponse.error(
-          res,
-          "Invalid input data",
-          (parseResult.error as any).errors
-        );
-      }
-
-      const { title, descriptions } = parseResult.data;
       const userId = req.user?._id;
+      if (!userId) return HandleResponse.error(res, "User not authenticated");
 
-      if (!userId) {
-        return HandleResponse.error(res, "User not authenticated");
-      }
+      const parse = noteValidationSchema.safeParse(req.body);
+      if (!parse.success)
+        return HandleResponse.error(res, "Invalid input data");
 
-      const { files } = req;
-      const noteImages = (files as any)?.noteImages || [];
-      const notePdfs = (files as any)?.notePdfs || [];
-      const thumbnail = (files as any)?.thumbnail?.[0] || null;
+      const { title, descriptions, noteImages, notePdfs, thumbnail } = req.body;
 
       const newNote = await this.noteService.uploadNote({
         userId,
         title,
         descriptions,
-        noteImages,
-        notePdfs,
-        thumbnail,
+        noteImages: noteImages || [],
+        notePdfs: notePdfs || [],
+        thumbnail: thumbnail || null,
       });
-      cleanupUploadedFiles(req.files as any)
-      return HandleResponse.success(res, newNote, "Note uploaded successfully");
-    } catch (error: any) {
-      cleanupUploadedFiles(req.files as any)
-      console.error("❌ Upload Error:", error);
-      return HandleResponse.error(res, error.message || "Something went wrong");
+
+      return HandleResponse.success(res, newNote, "Note uploaded");
+    } catch (err: any) {
+      return HandleResponse.error(res, err.message || "Failed to upload");
     }
   }
 
+  // update note
   async updateNote(req: Request, res: Response) {
     try {
-      console.log(req.body)
-      const noteId = req?.params?.id;
-      const { title, descriptions } = req.body;
-      const parseResult = noteValidationSchema.safeParse({ title, descriptions });
-
-      if (!parseResult.success) {
-        return HandleResponse.error(
-          res,
-          "Invalid input data",
-          (parseResult.error as any).errors
-        );
-      }
       const userId = req.user?._id;
+      const noteId = req.params.id;
 
-      if (!userId) {
-        return HandleResponse.error(res, "User not authenticated");
-      }
+      if (!userId) return HandleResponse.error(res, "User not authenticated");
+      if (!noteId) return HandleResponse.error(res, "Missing noteId");
 
-      const { files } = req;
-      const noteImages = (files as any)?.noteImages || [];
-      const notePdfs = (files as any)?.notePdfs || [];
-      const thumbnail = (files as any)?.thumbnail?.[0] || null;
+      const parse = noteValidationSchema.safeParse(req.body);
+      if (!parse.success)
+        return HandleResponse.error(res, "Invalid input");
 
-      const updateNote = await this.noteService.updateNote({
-        title,
+      const { title, descriptions, noteImages, notePdfs, thumbnail } = req.body;
+
+      const updated = await this.noteService.updateNote({
         noteId,
+        title,
         descriptions,
-        noteImages,
-        notePdfs,
-        thumbnail,
+        noteImages: noteImages || [],
+        notePdfs: notePdfs || [],
+        thumbnail: thumbnail || null,
       });
 
-      return HandleResponse.success(res, updateNote, "Note update successfully");
-    } catch (error: any) {
-      console.error("❌ Upload Error:", error);
-      return HandleResponse.error(res, error.message || "Something went wrong");
+      return HandleResponse.success(res, updated, "Note updated");
+    } catch (err: any) {
+      return HandleResponse.error(res, err.message);
     }
   }
 
+  // delete selected files
   async deleteNoteFiles(req: Request, res: Response) {
     try {
       const { noteId, noteImageIds = [], notePdfIds = [], thumbId } = req.body;
 
-      // ✅ Input validation
-      if (!noteId) {
-        return HandleResponse.error(res, "Missing noteId in request body");
-      }
+      if (!noteId) return HandleResponse.error(res, "noteId required");
+      if (!Array.isArray(noteImageIds) || !Array.isArray(notePdfIds))
+        return HandleResponse.error(res, "Invalid file ID array format");
 
-      if (
-        !Array.isArray(noteImageIds) ||
-        !Array.isArray(notePdfIds)
-      ) {
-        return HandleResponse.error(res, "Invalid input: noteImageIds and notePdfIds must be arrays");
-      }
-
-      // ✅ Call service
       const result = await this.noteService.deleteFiles({
         noteId,
         noteImageIds,
@@ -126,87 +115,80 @@ class NoteController {
       });
 
       return HandleResponse.success(res, result, result.message);
-    } catch (error: any) {
-      console.error("❌ deleteNoteFiles Controller Error:", error);
-      return HandleResponse.error(res, error.message || "Failed to delete note files");
-    }
-  };
-
-  async deleteNote(req: Request, res: Response) {
-    try {
-      const noteId = req?.params?.id;
-      if (!noteId) {
-        return HandleResponse.error(res, "Note id not provide")
-      }
-      const result = await this.noteService.deleteNote({ noteId });
-      return HandleResponse.success(res, null, result?.message);
-    } catch (error: any) {
-      console.error("❌ Delete Note Error:", error);
-      return HandleResponse.error(res, error.message || "Failed to delete note");
+    } catch (err: any) {
+      return HandleResponse.error(res, err.message);
     }
   }
 
+  // delete entire note
+  async deleteNote(req: Request, res: Response) {
+    try {
+      const noteId = req.params.id;
+      if (!noteId) return HandleResponse.error(res, "noteId required");
+
+      const result = await this.noteService.deleteNote({ noteId });
+
+      return HandleResponse.success(res, null, result.message);
+    } catch (err: any) {
+      return HandleResponse.error(res, err.message);
+    }
+  }
+
+  // get notes list
   async getNotes(req: Request, res: Response) {
     try {
       const userId = req.user?._id;
-      if (!userId) {
-        return HandleResponse.unauthorized(res, "User not authenticated");
-      }
+      if (!userId) return HandleResponse.unauthorized(res, "User not authenticated");
 
-      const { page = 1, limit = 10 } = req.query;
+      const page = Number(req.query.page || 1);
+      const limit = Number(req.query.limit || 10);
 
-      const result = await this.noteService.getNotes(
-        userId,
-        Number(page),
-        Number(limit)
-      );
+      const data = await this.noteService.getNotes(userId, page, limit);
 
-      console.log(result.notes)
-
-      return HandleResponse.success(res, result, "Notes fetched successfully");
-    } catch (error: any) {
-      console.error("❌ Get Notes Error:", error);
-      return HandleResponse.error(res, error.message || "Failed to fetch notes");
+      return HandleResponse.success(res, data, "Notes fetched");
+    } catch (err: any) {
+      return HandleResponse.error(res, err.message);
     }
   }
 
+  // get single note
   async getNoteById(req: Request, res: Response) {
     try {
-      const { id } = req.params;
-      const note = await this.noteService.getNoteById(id);
-      if (!note) return HandleResponse.error(res, "erors");
-      return HandleResponse.success(res, note, "Note details fetched successfully");
-    } catch (error: any) {
-      return HandleResponse.error(res, error.message);
+      const note = await this.noteService.getNoteById(req.params.id);
+      if (!note) return HandleResponse.error(res, "Note not found");
+
+      return HandleResponse.success(res, note, "Note fetched");
+    } catch (err: any) {
+      return HandleResponse.error(res, err.message);
     }
   }
 
-  async noteSetting(req: Request, res: Response) {
-    try {
-      const userId = req?.params?.id as string;
-      const { visibility, shareLink, sharedWith, allowComments, allowDownloads } = req.body as NoteInputSetting;
-      const validData = noteSettingValidation.parse({ visibility, shareLink, sharedWith, allowComments, allowDownloads });
-      if (!validData) {
-        return HandleResponse.badRequest(res, "Invalid settings")
-      }
-      const result = await this.noteService.noteSettingService(userId, validData);
-      return HandleResponse.success(res, result, "update Setting ")
-    } catch (error: any) {
-      console.error(error?.message);
-      return HandleResponse.error(res, error?.message)
-    }
-
-
-  }
-
+  // get user's all notes
   async getUserNotes(req: Request, res: Response) {
     try {
-      const userId = req?.user?._id as string;
-      const result = await this.noteService.getUserNotes(userId)
-      return HandleResponse.success(res, result, "fetch successfully");
-    } catch (error: any) {
-      console.error("❌ Upload Error:", error);
-      return HandleResponse.error(res, error.message || "Something went wrong");
+      const userId = req.user?._id as string;
+      const notes = await this.noteService.getUserNotes(userId);
+
+      return HandleResponse.success(res, notes, "Notes fetched");
+    } catch (err: any) {
+      return HandleResponse.error(res, err.message);
+    }
+  }
+
+  // update note settings
+  async noteSetting(req: Request, res: Response) {
+    try {
+      const noteId = req.params.id;
+      const parse = noteSettingValidation.safeParse(req.body);
+
+      if (!parse.success)
+        return HandleResponse.error(res, "Invalid settings");
+
+      const updated = await this.noteService.noteSettingService(noteId, parse.data);
+
+      return HandleResponse.success(res, updated, "Settings updated");
+    } catch (err: any) {
+      return HandleResponse.error(res, err.message);
     }
   }
 }
