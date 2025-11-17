@@ -71,11 +71,23 @@ noteRouter.get(
 );
 
 // update settings
-noteRouter.put(
+noteRouter.patch(
   "/note/settings/:id",
   autoRefreshAccessToken,
   authenticate,
   noteController.noteSetting
+);
+noteRouter.patch(
+  "/note/:noteId/like",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.toggleLike
+);
+noteRouter.patch(
+  "/note/:noteId/view",
+  autoRefreshAccessToken,
+  authenticate,
+  noteController.addViews
 );
 
 export default noteRouter;

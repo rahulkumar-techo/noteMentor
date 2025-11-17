@@ -6,6 +6,7 @@ import {
   NoteInputSetting,
 } from "../validations/note.validation";
 import NoteService from "../services/note.service";
+import reactionService from "../services/reaction.service";
 
 class NoteController {
   private noteService = new NoteService();
@@ -24,21 +25,21 @@ class NoteController {
   }
 
   async getSignedUploadToken(req: Request, res: Response) {
-  try {
-    const userId = req.user?._id;
-    const folder = req.query.folder as string;
+    try {
+      const userId = req.user?._id;
+      const folder = req.query.folder as string;
 
-    if (!folder) {
-      return HandleResponse.error(res, "Folder is required");
+      if (!folder) {
+        return HandleResponse.error(res, "Folder is required");
+      }
+
+      const token = await this.noteService.getSignedUpload(folder);
+
+      return HandleResponse.success(res, token, "Signed upload token generated");
+    } catch (err: any) {
+      return HandleResponse.error(res, err.message);
     }
-
-    const token = await this.noteService.getSignedUpload(folder);
-
-    return HandleResponse.success(res, token, "Signed upload token generated");
-  } catch (err: any) {
-    return HandleResponse.error(res, err.message);
   }
-}
 
 
   // create note
@@ -191,6 +192,33 @@ class NoteController {
       return HandleResponse.error(res, err.message);
     }
   }
+  // Reactions
+
+  async toggleLike(req: Request, res: Response) {
+    try {
+      const userId = req?.user?._id as string;
+      const { noteId } = req.params;
+      const note = await reactionService.toggleLike({ noteId, userId });
+
+      return HandleResponse.success(res, note, "updateLike");
+    } catch (err: any) {
+      console.error(err.message)
+      return HandleResponse.error(res, err.message);
+    }
+  };
+  async addViews(req: Request, res: Response) {
+    try {
+      const userId = req?.user?._id as string;
+      const { noteId } = req.params;
+      const note = await reactionService.addView({ noteId, userId });
+
+      return HandleResponse.success(res, note, "add view");
+    } catch (err: any) {
+      console.error(err.message)
+      return HandleResponse.error(res, err.message);
+    }
+  };
+
 }
 
 export default new NoteController();

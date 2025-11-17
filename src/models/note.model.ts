@@ -31,6 +31,8 @@ export interface INote extends Document {
   };
 
   stats: {
+    likes: Types.ObjectId[]|null,
+    views: Types.ObjectId[]|null,
     viewsCount: number;
     likesCount: number;
     commentsCount: number;
@@ -84,6 +86,8 @@ const NoteSchema = new Schema<INote>(
     },
 
     stats: {
+      likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+      views: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
       viewsCount: { type: Number, default: 0 },
       likesCount: { type: Number, default: 0 },
       commentsCount: { type: Number, default: 0 },
