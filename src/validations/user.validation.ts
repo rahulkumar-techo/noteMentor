@@ -63,3 +63,33 @@ export const loginValidation = z.object({
 export type LoginValidationInput = z.infer<typeof loginValidation>;
 
 
+const RoleSchema = z.enum(["student", "teacher", "admin", "guest"]).default("guest");
+
+const AcademicSchema = z.object({
+  board: z.string().trim().max(100).optional(),
+  classOrYear: z.string().trim().max(50).optional(),
+
+  subjects: z
+    .array(z.string().trim().min(1, "subject cannot be empty"))
+    .max(20, "subjects cannot have more than 20 items")
+    .default([]),  // ← FIXED
+
+  languagePreference: z.enum(["english", "hindi", "hinglish"]).default("english"),
+
+  examGoal: z.string().trim().max(200).default("").optional(),
+});
+
+const PersonalizationSchema = z.object({
+  learningSpeed: z.enum(["slow", "moderate", "fast"]).default("moderate"),
+  goalType: z.enum(["score_improvement", "concept_clarity", "revision"]).default("concept_clarity"),
+  focusDuration: z.number().int().min(5).max(240).default(25),
+  noteUploadType: z.enum(["handwritten", "typed", "mixed"]).default("mixed"),
+});
+
+export const UserPayloadSchema = z.object({
+  role: RoleSchema,
+  academic: AcademicSchema,
+  personalization: PersonalizationSchema,
+});
+
+export type UserPayload = z.infer<typeof UserPayloadSchema>;

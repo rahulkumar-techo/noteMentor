@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { RegisterInput, registerValidation, updateProfileValidation, registerVerificationValidation, RegisterVerificationInput, LoginValidationInput, loginValidation } from "../validations/user.validation";
+import { RegisterInput, registerValidation, updateProfileValidation, registerVerificationValidation, RegisterVerificationInput, LoginValidationInput, loginValidation, UserPayloadSchema } from "../validations/user.validation";
 import HandleResponse from "../shared/utils/handleResponse.utils";
 import userService from "../services/user.service";
 import setTokenCookies from "../shared/utils/set-cookies";
@@ -84,7 +84,6 @@ class UserController {
         try {
             const { email, password } = req.body;
             const oldRefreshToken = req?.cookies?.refreshToken;
-            console.log({ oldRefreshToken })
             const validatedData = loginValidation.parse({ email, password });
             const { accessToken, refreshToken, accessTTL, refreshTTL } = await userService.loginByEmailAndPassword(oldRefreshToken, validatedData);
 
@@ -98,8 +97,25 @@ class UserController {
 
     async get_userProfile(req: Request, res: Response) {
         try {
-            const user = await UserModel.findById({ _id: req?.user?._id }).select("-password");
+            const user = await userService.get_userdetails(req?.user?._id as string);
             return HandleResponse.success(res, user, "Logined")
+        } catch (error: any) {
+            console.error("❌ Login Controller Error:", error.message);
+            return HandleResponse.error(res, error.message);
+        }
+    }
+
+    async complete_profile(req: Request, res: Response) {
+        try {
+           
+            const validate = UserPayloadSchema.parse(req?.body);
+
+            const userId = req?.user?._id as string;
+            if (!validate) {
+                return HandleResponse.badRequest(res, "Invalid Inputs");
+            }
+            const result = await userService.completeProfile(userId, validate);
+            return HandleResponse.success(res, result?.user, result?.message);
         } catch (error: any) {
             console.error("❌ Login Controller Error:", error.message);
             return HandleResponse.error(res, error.message);

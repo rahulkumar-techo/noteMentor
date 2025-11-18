@@ -12,6 +12,7 @@ import { userController } from "../controllers/user.controller";
 import { academicController } from "../controllers/academic.controller";
 import { personalizationController } from "../controllers/personalization.controller";
 import { deviceController } from "../controllers/device.controller";
+import { RefreshTokenModel } from "../models/refreh.model";
 
 // /api/user/update/academic, /update/personalization, /update/settings?
 const userRouter = express()
@@ -26,36 +27,38 @@ userRouter.get(
         return res.redirect("http://localhost:3000?error=oauth_failed");
       }
       const refactorUser = {
-        _id: new Types.ObjectId(user?._id) ,
+        _id: new Types.ObjectId(user?._id),
       }
       const oldRefreshToken = req?.cookies?.refreshToken;
-      const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser,oldRefreshToken });
+      const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser, oldRefreshToken });
       setTokenCookies({ res, accessToken, refreshToken, accessTTL, refreshTTL });
-    //   await redis.set(`session:${user._id}`, JSON.stringify(user), "EX", accessTTL);
+      //   await redis.set(`session:${user._id}`, JSON.stringify(user), "EX", accessTTL);
       res.redirect("http://localhost:3000/");
     })(req, res, next);
   }
 );
 
-userRouter.get("/me",autoRefreshAccessToken,authenticate,userController.get_userProfile)
-userRouter.post("/register",userController.registerUser)
-userRouter.post("/otp-verification",userController.registerVerification)
-userRouter.post("/login",userController.login)
+userRouter.get("/me", autoRefreshAccessToken, authenticate, userController.get_userProfile)
+userRouter.post("/register", userController.registerUser)
+userRouter.post("/otp-verification", userController.registerVerification)
+userRouter.post("/login", userController.login)
 
 // Profile
 // userRouter.put("/api/user/update-profile",autoRefreshAccessToken,authenticate,upload.single("avatar"),userController.updateProfile)
-userRouter.get("/api/get-profile",autoRefreshAccessToken,authenticate,userController.get_userProfile)
+userRouter.get("/api/get-profile", autoRefreshAccessToken, authenticate, userController.get_userProfile)
 
 // academic 
-userRouter.put("/api/user/academic",autoRefreshAccessToken,authenticate,academicController.editAcademic)
+userRouter.put("/api/user/academic", autoRefreshAccessToken, authenticate, academicController.editAcademic)
 
 // Personalization 
-userRouter.get("/api/user/personalization", autoRefreshAccessToken,authenticate, personalizationController.get);
-userRouter.put("/api/user/personalization", autoRefreshAccessToken,authenticate,personalizationController.update);
+userRouter.get("/api/user/personalization", autoRefreshAccessToken, authenticate, personalizationController.get);
+userRouter.put("/api/user/personalization", autoRefreshAccessToken, authenticate, personalizationController.update);
 
 // device settings
-userRouter.put("/api/user/settings",autoRefreshAccessToken,authenticate,deviceController.update)
-userRouter.get("/api/user/settings",autoRefreshAccessToken,authenticate,deviceController.get)
+userRouter.put("/api/user/settings", autoRefreshAccessToken, authenticate, deviceController.update)
+userRouter.get("/api/user/settings", autoRefreshAccessToken, authenticate, deviceController.get)
+// complete profile
+userRouter.put("/api/user/complete-profile", autoRefreshAccessToken, authenticate, userController.complete_profile)
 
 userRouter.post(
   "/logout",
@@ -63,6 +66,9 @@ userRouter.post(
   authenticate,
   async (req: Request, res: Response) => {
     try {
+      const refreshToken = req?.cookies?.refreshToken;
+      await redis.del(`refresh:${refreshToken}`);
+      await RefreshTokenModel.deleteOne({token:refreshToken})
       // 🧹 Clear authentication cookies
       res.clearCookie("accessToken", {
         httpOnly: true,

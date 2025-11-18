@@ -98,7 +98,7 @@ const userSchema = new Schema<IUser>(
     isProfileComplete: { type: Boolean, default: false },
     role: {
       type: String,
-      enum: ["school", "college", "aspirant", "teacher", "admin", "guest"],
+      enum: ["student",  "teacher", "admin", "guest"],
       required: true,
       default: "guest"
     },

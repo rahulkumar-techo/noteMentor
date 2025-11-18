@@ -7,7 +7,7 @@ import { Request, Response } from "express";
 import { IUser, cloudinaryFile } from "../interfaces/user.interface";
 import { UserModel } from "../models/user.model";
 import { FileManager } from "../shared/utils/FileManger";
-import { LoginValidationInput, RegisterInput, RegisterVerificationInput } from "../validations/user.validation";
+import { LoginValidationInput, RegisterInput, RegisterVerificationInput, UserPayload } from "../validations/user.validation";
 import { helperService } from "./helper.service";
 import HandleResponse from "../shared/utils/handleResponse.utils";
 import { otpToken } from "../shared/utils/otp-token.utils";
@@ -16,6 +16,7 @@ import { Types } from "mongoose";
 import { generateTokens } from "../shared/utils/genrate-token.utils";
 import setTokenCookies from "../shared/utils/set-cookies";
 import bcrypt from "bcryptjs"
+import { RedisCache } from "../shared/cache/redis-cache";
 
 interface IUpdateProfile {
   username?: string;
@@ -25,6 +26,7 @@ interface IUpdateProfile {
 
 class UserService {
   private fileManager = new FileManager();
+  protected redisCached = new RedisCache();
   async updateProfile(
     userId: string,
     { username, fullname, avatar }: IUpdateProfile
@@ -167,7 +169,62 @@ class UserService {
       throw new Error(error.message);
     }
   }
+  async get_userdetails(id: string) {
+    const cached = await this.redisCached.get(id);
+    if (cached) {
+      return JSON.parse(cached as any);
+    }
+    const user = await UserModel.findById({ _id: id }).select("-password");
+    if (!user) {
+      throw new Error("User not found");
+    }
+    await this.redisCached.set(id, JSON.stringify(user), 60 * 30);
+    return user;
+  }
 
+
+  async completeProfile(id: string, value: UserPayload) {
+    const user = await UserModel.findById(id);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Update role
+    if (value.role) {
+      user.role = value.role;
+    }
+
+    // Update Academic details
+    user.academic = {
+      board: value.academic.board ?? "",
+      classOrYear: value.academic.classOrYear ?? "",
+      subjects: value.academic.subjects ?? [],
+      languagePreference: value.academic.languagePreference,
+      examGoal: value.academic.examGoal ?? "",
+    };
+
+    // Update Personalization
+    user.personalization = {
+      learningSpeed: value.personalization.learningSpeed,
+      goalType: value.personalization.goalType,
+      focusDuration: value.personalization.focusDuration,
+      noteUploadType: value.personalization.noteUploadType,
+    };
+    user.isProfileComplete = true;
+
+    await user.save();
+    const isCached = await this.redisCached.get(id);
+    if (isCached) {
+      await this.redisCached.delete(id);
+    }
+    await this.redisCached.set(id, JSON.stringify(user), 60 * 30);
+
+    return {
+      message: "Profile completed successfully",
+      user,
+    };
+  }
 
 
 }

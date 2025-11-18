@@ -137,3 +137,4 @@ curl https://api.dnsexit.com/dns/ud/?apikey=${{API_KEY}} -d host=novamentor.work
 ```json
 {"code":0,"message":"Success - novamentor.work.gd IP stays as 157.35.40.222"}
 ```
+<!-- FLUSHALL clear upstash data -->

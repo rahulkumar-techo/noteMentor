@@ -18,7 +18,7 @@ export interface IUserAcademic {
 
 // 💡 Personalization Info
 export interface IUserPersonalization {
-  userId: string;
+  userId?: string;
   learningSpeed: "fast" | "moderate" | "slow";
   goalType: "score_improvement" | "concept_clarity" | "revision";
   focusDuration: number;
@@ -54,7 +54,7 @@ export interface IUser extends Document {
   };
   isVerified: boolean;
   isProfileComplete: boolean;
-  role: "school" | "college" | "aspirant" | "teacher" | "admin" | "guest";
+  role: "student"| "teacher" | "admin" | "guest";
   provider: "google" | "local";
   academic?: IUserAcademic;
   personalization?: IUserPersonalization;
