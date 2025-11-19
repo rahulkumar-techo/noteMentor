@@ -143,7 +143,7 @@ class CommentService {
     const skip = (page - 1) * limit;
 
     const comments = await CommentModel.find({ noteId })
-      .populate("userId", "fullname avatar")
+      .populate("userId", "fullname avatar username")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
