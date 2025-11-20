@@ -212,6 +212,49 @@ class NoteService {
     if (!updated) throw new Error("Invalid note ID");
     return updated;
   }
+
+  async getAllNotes(page = 1, limit = 10, search = "") {
+    const skip = (page - 1) * limit;
+
+    // 🔍 Build search query  
+    const searchQuery = search
+      ? {
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { subject: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+        ],
+      }
+      : {};
+
+    // 🚀 Optional: Cached Key
+    const cacheKey = `allNotes:${page}:${limit}:${search}`;
+    const cached = await notesCache.get(cacheKey);
+
+    if (cached) return cached;
+
+    // 🚀 Query + Count in Parallel
+    const [notes, total] = await Promise.all([
+      NoteModel.find(searchQuery)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      NoteModel.countDocuments(searchQuery),
+    ]);
+
+    const data = {
+      notes,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
+
+    // 🔥 Save to cache
+    await notesCache.set(cacheKey, data);
+
+    return data;
+  }
 }
 
 export default NoteService;

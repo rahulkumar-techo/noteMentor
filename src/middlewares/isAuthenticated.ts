@@ -29,11 +29,13 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     // 2️⃣ Verify token
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_KEY) as JwtPayload & {
       _id: string;
+ 
     };
 
     // 3️⃣ Attach safe user object to request
     const safeUser: IUserRequest = {
       _id: decoded._id,
+      
     };
 
     req.user = safeUser;

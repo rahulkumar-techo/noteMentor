@@ -4,6 +4,7 @@
 export interface IUserRequest {
   _id: string;
   email?: string;
+  // role:string;
   fullname?: string;
   picture?: string;
   isVerified?: boolean;

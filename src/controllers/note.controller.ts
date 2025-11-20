@@ -21,6 +21,7 @@ class NoteController {
     this.deleteNoteFiles = this.deleteNoteFiles.bind(this);
     this.deleteNote = this.deleteNote.bind(this);
     this.getSignedUploadToken = this.getSignedUploadToken.bind(this);
+    this.getAllNotesController = this.getAllNotesController.bind(this);
 
   }
 
@@ -219,6 +220,19 @@ class NoteController {
     }
   };
 
+  async getAllNotesController(req: Request, res: Response) {
+    try {
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
+      const search = (req.query.search as string) || "";
+      const data = await this.noteService.getAllNotes(page, limit, search);
+      return HandleResponse.success(res, data, "Notes fetched successfully");
+
+    } catch (error: any) {
+      console.error("Error in getAllNotesController:", error);
+      return HandleResponse.error(res, error?.message);
+    }
+  };
 }
 
 export default new NoteController();

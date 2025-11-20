@@ -15,6 +15,7 @@ import noteRouter from "./routes/note.route";
 import feedRouter from "./routes/feed.route";
 import { cleanupUploadedFiles } from "./shared/utils/cleanupFileUpload";
 import commentRouter from "./routes/comment.route";
+import analyticsRouter from "./routes/analytics.route";
 
 
 const app = express();
@@ -56,7 +57,8 @@ app.use(questionRoute)
 app.use(resultRouter)
 app.use(noteRouter)
 app.use(feedRouter)
-app.use(commentRouter)
+app.use(commentRouter);
+app.use(analyticsRouter);
 
 // ---------------- 404 Handler ----------------
 app.use((req: Request, res: Response) => {

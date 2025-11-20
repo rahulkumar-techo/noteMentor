@@ -13,6 +13,7 @@ import { academicController } from "../controllers/academic.controller";
 import { personalizationController } from "../controllers/personalization.controller";
 import { deviceController } from "../controllers/device.controller";
 import { RefreshTokenModel } from "../models/refreh.model";
+import { requireRole } from "../middlewares/requireRole.middleware";
 
 // /api/user/update/academic, /update/personalization, /update/settings?
 const userRouter = express()
@@ -95,4 +96,5 @@ userRouter.post(
     }
   }
 );
+
 export default userRouter

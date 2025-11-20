@@ -226,6 +226,58 @@ class UserService {
     };
   }
 
+  async getUsersData(page = 1, limit = 10, search = "") {
+    try {
+      const skip = (page - 1) * limit;
+
+      // 🔍 Build search query
+      const searchQuery = search
+        ? {
+          $or: [
+            { fullname: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+            { role: { $regex: search, $options: "i" } },
+          ],
+        }
+        : {};
+
+      // 🧊 Cache key includes search for accuracy
+      const cacheKey = `users:page_${page}:limit_${limit}:search_${search}`;
+
+      const cached = await this.redisCached.get(cacheKey);
+      if (cached) return JSON.parse(cached as any);
+
+      // 🚀 Fetch in parallel
+      const [users, total] = await Promise.all([
+        UserModel.find(searchQuery)
+          .select("fullname email role createdAt")
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        UserModel.countDocuments(searchQuery),
+      ]);
+
+      const response = {
+        success: true,
+        data: users,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+
+      // Cache for 5 minutes (300 sec)
+      await this.redisCached.set(cacheKey, JSON.stringify(response), 300);
+
+      return response;
+
+    } catch (error: any) {
+      throw new Error(error?.message || "Failed to fetch user data");
+    }
+  }
+
 
 }
 
