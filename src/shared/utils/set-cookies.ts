@@ -24,30 +24,23 @@ const setTokenCookies = ({
     secure: isProd,
     sameSite,
     path: "/",
-    domain: isProd ? ".onrender.com" : "localhost",
+    domain: isProd ? "notementor.onrender.com" : "localhost",
   };
+
 
 
   const accessExpires = new Date(Date.now() + accessTTL * 1000);
   const refreshExpires = new Date(Date.now() + refreshTTL * 1000);
-
   res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: isProd,           // required for cross-domain
-    sameSite: isProd ? "none" : "lax",
-    path: "/",
-    domain: isProd ? ".onrender.com" : "localhost",
+    ...cookieOptions,
     maxAge: accessTTL * 1000,
   });
 
   res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? "none" : "lax",
-    path: "/",
-    domain: isProd ? ".onrender.com" : "localhost",
+    ...cookieOptions,
     maxAge: refreshTTL * 1000,
   });
+
 };
 
 export default setTokenCookies;
