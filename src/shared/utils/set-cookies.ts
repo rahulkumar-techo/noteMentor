@@ -18,13 +18,16 @@ const setTokenCookies = ({
 
   const isProd = process.env.NODE_ENV === "production";
   const sameSite: "none" | "lax" = isProd ? "none" : "lax";
+  const cookieDomain = process.env.NODE_ENV === "production"
+  ? "notementor.onrender.com"
+  : undefined;
 
   const cookieOptions = {
     httpOnly: true,
     secure: isProd,
     sameSite,
     path: "/",
-    domain: isProd ? "notementor.onrender.com" : "localhost",
+    domain:cookieDomain,
   };
 
 
