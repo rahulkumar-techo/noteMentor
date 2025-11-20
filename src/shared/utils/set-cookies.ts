@@ -15,12 +15,18 @@ const setTokenCookies = ({
   accessTTL,
   refreshTTL,
 }: ICookie): void => {
+
+  const isProd = process.env.NODE_ENV === "production";
+  const sameSite: "none" | "lax" = isProd ? "none" : "lax";
+
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict" as const,
+    secure: isProd,
+    sameSite,
     path: "/",
+    domain: isProd ? ".onrender.com" : "localhost",
   };
+
 
   const accessExpires = new Date(Date.now() + accessTTL * 1000);
   const refreshExpires = new Date(Date.now() + refreshTTL * 1000);
