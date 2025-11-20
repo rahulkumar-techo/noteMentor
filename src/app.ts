@@ -16,6 +16,7 @@ import feedRouter from "./routes/feed.route";
 import { cleanupUploadedFiles } from "./shared/utils/cleanupFileUpload";
 import commentRouter from "./routes/comment.route";
 import analyticsRouter from "./routes/analytics.route";
+import liteMetricsRouter from "./matrices/liteMetricsExporter";
 
 
 const app = express();
@@ -59,6 +60,10 @@ app.use(noteRouter)
 app.use(feedRouter)
 app.use(commentRouter);
 app.use(analyticsRouter);
+
+// matrics
+
+app.use(liteMetricsRouter)
 
 // ---------------- 404 Handler ----------------
 app.use((req: Request, res: Response) => {

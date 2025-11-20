@@ -36,6 +36,7 @@
     "sharp": "^0.34.4",
     "socket.io": "^4.8.1",
     "streamifier": "^0.1.1",
+    "systeminformation": "^5.27.11",
     "winston": "^3.18.3",
     "zod": "^4.1.12"
   },
