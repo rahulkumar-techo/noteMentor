@@ -20,7 +20,7 @@ import liteMetricsRouter from "./matrices/liteMetricsExporter";
 
 
 const app = express();
-app.use(compressionMiddleware);
+app.use(compressionMiddleware); 
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
