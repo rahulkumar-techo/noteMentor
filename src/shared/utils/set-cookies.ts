@@ -32,15 +32,21 @@ const setTokenCookies = ({
   const refreshExpires = new Date(Date.now() + refreshTTL * 1000);
 
   res.cookie("accessToken", accessToken, {
-    ...cookieOptions,
+    httpOnly: true,
+    secure: isProd,           // required for cross-domain
+    sameSite: isProd ? "none" : "lax",
+    path: "/",
+    domain: isProd ? ".onrender.com" : "localhost",
     maxAge: accessTTL * 1000,
-    expires: accessExpires, // ✅ Explicit expiry timestamp
   });
 
   res.cookie("refreshToken", refreshToken, {
-    ...cookieOptions,
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    path: "/",
+    domain: isProd ? ".onrender.com" : "localhost",
     maxAge: refreshTTL * 1000,
-    expires: refreshExpires, // ✅ Explicit expiry timestamp
   });
 };
 
