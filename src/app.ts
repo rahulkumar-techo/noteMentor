@@ -1,11 +1,18 @@
+/**
+ * Final Clean App Setup
+ * - No sessions
+ * - Passport only for OAuth redirect
+ * - JWT used for auth
+ * - Cookies work with Next.js & Render
+ */
+
 import express, { NextFunction, Request, Response } from "express";
-import session from "express-session";
 import passport from "./strategies/google.strategy";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
 import userRouter from "./routes/user.route";
-import morgan from "morgan"
+import morgan from "morgan";
 import globalError_handler from "./shared/utils/globalError-handler";
 import questionRoute from "./routes/question.route";
 import path from "path";
@@ -18,18 +25,22 @@ import commentRouter from "./routes/comment.route";
 import analyticsRouter from "./routes/analytics.route";
 import liteMetricsRouter from "./matrices/liteMetricsExporter";
 
-
 const app = express();
-app.use(compressionMiddleware); 
 
+/* ------------------------- Middlewares ------------------------- */
+app.set("trust proxy", 1);
+
+app.use(compressionMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// CORS
 const allowedOrigins = [
   "http://localhost:3000",
   "https://notementor.onrender.com",
-  "https://notementor.vercel.app",       // your production frontend
-  "https://www.notementor.vercel.app"
+  "https://notementor.vercel.app",
+  "https://www.notementor.vercel.app",
 ];
 
 app.use(
@@ -45,32 +56,16 @@ app.use(
   })
 );
 
-
-
+// Security + Logs
 app.use(helmet());
 app.use(morgan("dev"));
-// Serve public folder
 app.use(express.static(path.join(__dirname, "public")));
-// Session is required for Passport OAuth to maintain state
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "supersecret",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: true,            // required for cross-site cookies
-      sameSite: "none",        // required on Chrome/Edge/Safari
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    }
-  })
-);
-app.set("trust proxy", 1);
+
+// Passport ONLY initializes (NO session)
 app.use(passport.initialize());
-app.use(passport.session());
 
+/* --------------------------- Routes ---------------------------- */
 
-// ---------------- Root Routes ----------------
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -79,37 +74,33 @@ app.get("/", (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
-// ---------------- Routes ----------------
-app.use(userRouter)
-app.use(questionRoute)
-app.use(resultRouter)
-app.use(noteRouter)
-app.use(feedRouter)
+
+app.use(userRouter);
+app.use(questionRoute);
+app.use(resultRouter);
+app.use(noteRouter);
+app.use(feedRouter);
 app.use(commentRouter);
 app.use(analyticsRouter);
+app.use(liteMetricsRouter);
 
-// matrics
-
-app.use(liteMetricsRouter)
-
-// ---------------- 404 Handler ----------------
+/* --------------------------- 404 ---------------------------- */
 app.use((req: Request, res: Response) => {
   res.status(404).json({ message: "Route not found" });
 });
 
+/* --------------------- Aborted Upload Cleanup --------------------- */
 app.use((req, res, next) => {
   req.on("aborted", () => {
-    console.warn("⚠️ Request aborted by user — cleaning up temp files");
+    console.warn("⚠️ Request aborted — cleaning temp files");
     cleanupUploadedFiles((req as any).files);
   });
   next();
 });
 
+/* -------------------------- Error Handler -------------------------- */
+app.use(globalError_handler);
 
-// error handler
-app.use(globalError_handler)
-
-// ---------------- Fallback Error Catcher ----------------
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error("❌ Unhandled Error:", err);
   if (res.headersSent) return next(err);
@@ -117,4 +108,5 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     .status(500)
     .json({ message: "Internal Server Error", error: err.message || err });
 });
+
 export default app;

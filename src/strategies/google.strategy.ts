@@ -1,6 +1,5 @@
 /**
- * Google OAuth Passport Configuration
- * Links user login with Google and integrates with your existing JWT system
+ * Google OAuth Strategy (JWT version)
  */
 
 import passport from "passport";
@@ -22,7 +21,8 @@ passport.use(
         });
 
         if (!user) {
-          const username = profile?.username || profile?.displayName + (Math.floor(Date.now()));
+          const username = profile.displayName + "_" + Date.now();
+
           user = await UserModel.create({
             username,
             fullname: profile.displayName,
@@ -30,14 +30,13 @@ passport.use(
             social_auth: { googleId: profile.id },
             provider: "google",
             avatar: {
-              secure_url: profile?._json?.picture||""
+              secure_url: profile?._json?.picture || "",
             },
-            isVerified: profile?._json?.email_verified || true
+            isVerified: true,
           });
         }
 
-        // Return a lightweight user object to session or JWT
-        done(null, {
+        return done(null, {
           _id: user._id.toString(),
           email: user.email,
           fullname: user.fullname,
@@ -45,19 +44,10 @@ passport.use(
         });
       } catch (err) {
         console.error("❌ Google Strategy Error:", err);
-        done(err, undefined);
+        return done(err, undefined);
       }
     }
   )
 );
-
-// Serialize + Deserialize (for session compatibility)
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-
-passport.deserializeUser((obj: any, done) => {
-  done(null, obj);
-});
 
 export default passport;
