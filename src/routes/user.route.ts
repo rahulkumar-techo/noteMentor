@@ -27,22 +27,43 @@ userRouter.get(
       if (err || !user) {
         return res.redirect("http://localhost:3000?error=oauth_failed");
       }
+
       const refactorUser = {
         _id: new Types.ObjectId(user?._id),
-      }
+      };
+
       const oldRefreshToken = req?.cookies?.refreshToken;
-      const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser, oldRefreshToken });
-      setTokenCookies({ res, accessToken, refreshToken, accessTTL, refreshTTL });
-      //   await redis.set(`session:${user._id}`, JSON.stringify(user), "EX", accessTTL);
+      const { accessToken, refreshToken, accessTTL, refreshTTL } =
+        await generateTokens({ user: refactorUser, oldRefreshToken });
+
+      setTokenCookies({
+        res,
+        accessToken,
+        refreshToken,
+        accessTTL,
+        refreshTTL,
+      });
+
+      // Send HTML redirect page (NOT a file download)
+      res.setHeader("Content-Type", "text/html");
       return res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Redirecting...</title>
+</head>
+<body>
   <script>
     window.location.href = "http://localhost:3000/";
   </script>
+</body>
+</html>
 `);
-
     })(req, res, next);
   }
 );
+
 
 userRouter.get("/me", autoRefreshAccessToken, authenticate, userController.get_userProfile)
 userRouter.post("/register", userController.registerUser)
