@@ -35,6 +35,8 @@ userRouter.get(
   }),
   async (req: any, res) => {
     try {
+      console.log("🔥 GOOGLE SUCCESS CALLBACK HIT");
+    console.log("🔥 USER FROM PASSPORT:", req.user);
       const user = req.user;
 
       const refactorUser = { _id: user._id };
