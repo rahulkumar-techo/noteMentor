@@ -5,7 +5,7 @@ import { log } from "./shared/logs/logger";
 import { createServer } from "node:http";
 import { initSocket } from "./socket";
 
-const PORT = config.port || 8000;
+const PORT = config.port || 5000;
 
 process.on("uncaughtException", (err) => {
   log.error(`Uncaught Exception: ${err.message}`);

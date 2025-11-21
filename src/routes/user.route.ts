@@ -72,10 +72,10 @@ userRouter.get(
   }
 );
 
-userRouter.get("/me", autoRefreshAccessToken, authenticate, userController.get_userProfile)
-userRouter.post("/register", userController.registerUser)
-userRouter.post("/otp-verification", userController.registerVerification)
-userRouter.post("/login", userController.login)
+userRouter.get("/api/me", autoRefreshAccessToken, authenticate, userController.get_userProfile)
+userRouter.post("/api/register", userController.registerUser)
+userRouter.post("/api/otp-verification", userController.registerVerification)
+userRouter.post("/api/login", userController.login)
 
 // Profile
 // userRouter.put("/api/user/update-profile",autoRefreshAccessToken,authenticate,upload.single("avatar"),userController.updateProfile)
