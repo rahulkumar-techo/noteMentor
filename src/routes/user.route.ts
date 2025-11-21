@@ -34,12 +34,7 @@ userRouter.get(
       const { accessToken, refreshToken, accessTTL, refreshTTL } = await generateTokens({ user: refactorUser, oldRefreshToken });
       setTokenCookies({ res, accessToken, refreshToken, accessTTL, refreshTTL });
       //   await redis.set(`session:${user._id}`, JSON.stringify(user), "EX", accessTTL);
-      return res.send(`
-  <script>
-    window.location.href = "http://localhost:3000/";
-  </script>
-`);
-
+      res.redirect("http://localhost:3000/");
     })(req, res, next);
   }
 );
@@ -74,7 +69,7 @@ userRouter.post(
     try {
       const refreshToken = req?.cookies?.refreshToken;
       await redis.del(`refresh:${refreshToken}`);
-      await RefreshTokenModel.deleteOne({ token: refreshToken })
+      await RefreshTokenModel.deleteOne({token:refreshToken})
       // 🧹 Clear authentication cookies
       res.clearCookie("accessToken", {
         httpOnly: true,
