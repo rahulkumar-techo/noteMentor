@@ -95,7 +95,7 @@ userRouter.get("/api/user/settings", autoRefreshAccessToken, authenticate, devic
 userRouter.put("/api/user/complete-profile", autoRefreshAccessToken, authenticate, userController.complete_profile)
 
 userRouter.post(
-  "/logout",
+  "/api/logout",
   autoRefreshAccessToken,
   authenticate,
   async (req: Request, res: Response) => {

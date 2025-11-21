@@ -38,6 +38,7 @@ const allowedOrigins = [
   "https://notementor.onrender.com",
   "https://notementor.vercel.app",
   "https://www.notementor.vercel.app",
+  "https://note-mentor-frontend.vercel.app/"
 ];
 
 app.use(
