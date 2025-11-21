@@ -13,6 +13,8 @@ import setTokenCookies from "../shared/utils/set-cookies";
  */
 const autoRefreshAccessToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log("REQ COOKIES:", req.cookies);
+
     let accessToken = req.cookies?.accessToken;
     // if accessToken  exists and not expired then just pass
     if (accessToken && !isTokenExp(accessToken)) {

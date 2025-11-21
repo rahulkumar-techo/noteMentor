@@ -19,7 +19,7 @@ const setTokenCookies = ({
   const isProd = process.env.NODE_ENV === "production";
   const sameSite: "none" | "lax" = isProd ? "none" : "lax";
   const cookieDomain = process.env.NODE_ENV === "production"
-  ? "notementor.onrender.com"
+  ? ".notementor.onrender.com"
   : undefined;
 
   const cookieOptions = {

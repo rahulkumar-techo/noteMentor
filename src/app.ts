@@ -57,6 +57,12 @@ app.use(
     secret: process.env.SESSION_SECRET || "supersecret",
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: true,            // required for cross-site cookies
+      sameSite: "none",        // required on Chrome/Edge/Safari
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    }
   })
 );
 app.set("trust proxy", 1);
