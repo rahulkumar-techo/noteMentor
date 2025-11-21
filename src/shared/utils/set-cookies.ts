@@ -22,9 +22,7 @@ const cookieOptions: CookieOptions = {
   httpOnly: true,
   secure: isProd,
   sameSite: isProd ? "none" : "lax",
-  path: "/",
-  domain: isProd ? ".notementor.onrender.com" : undefined,
-  partitioned: true as any   
+  path: "/",  
 };
 
 

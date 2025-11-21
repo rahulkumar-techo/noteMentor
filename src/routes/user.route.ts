@@ -15,6 +15,11 @@ import { deviceController } from "../controllers/device.controller";
 import { RefreshTokenModel } from "../models/refreh.model";
 import { requireRole } from "../middlewares/requireRole.middleware";
 
+const isProd = process.env.NODE_ENV === "production";
+const FRONTEND_URL = isProd 
+  ? "https://notementor.vercel.app" 
+  : "http://localhost:3000";
+
 // /api/user/update/academic, /update/personalization, /update/settings?
 const userRouter = express()
 // Routes
@@ -26,26 +31,29 @@ userRouter.get(
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
-// Handle Google callback
 userRouter.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "http://localhost:3000?error=oauth_failed",
-    session: false, // because you're using JWT, not passport sessions
+    failureRedirect: `${FRONTEND_URL}?error=oauth_failed`,
+    session: false,
   }),
   async (req: any, res) => {
     try {
       console.log("🔥 GOOGLE SUCCESS CALLBACK HIT");
-    console.log("🔥 USER FROM PASSPORT:", req.user);
-      const user = req.user;
+      console.log("🔥 USER FROM PASSPORT:", req.user);
 
-      const refactorUser = { _id: user._id };
+      const user = req.user;
 
       const oldRefreshToken = req.cookies?.refreshToken;
 
+      // generate new tokens
       const { accessToken, refreshToken, accessTTL, refreshTTL } =
-        await generateTokens({ user: refactorUser, oldRefreshToken });
+        await generateTokens({
+          user: { _id: user._id },
+          oldRefreshToken,
+        });
 
+      // set cookies
       setTokenCookies({
         res,
         accessToken,
@@ -54,13 +62,15 @@ userRouter.get(
         refreshTTL,
       });
 
-      return res.redirect("http://localhost:3000/");
+      // redirect to frontend
+      return res.redirect(FRONTEND_URL);
+
     } catch (err) {
-      return res.redirect("http://localhost:3000?error=server_error");
+      console.error("OAuth error:", err);
+      return res.redirect(`${FRONTEND_URL}?error=server_error`);
     }
   }
 );
-
 
 userRouter.get("/me", autoRefreshAccessToken, authenticate, userController.get_userProfile)
 userRouter.post("/register", userController.registerUser)
@@ -92,7 +102,7 @@ userRouter.post(
     try {
       const refreshToken = req?.cookies?.refreshToken;
       await redis.del(`refresh:${refreshToken}`);
-      await RefreshTokenModel.deleteOne({token:refreshToken})
+      await RefreshTokenModel.deleteOne({ token: refreshToken })
       // 🧹 Clear authentication cookies
       res.clearCookie("accessToken", {
         httpOnly: true,

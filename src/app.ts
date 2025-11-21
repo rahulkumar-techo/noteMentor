@@ -1,41 +1,38 @@
-/**
- * Final Clean App Setup
- * - No sessions
- * - Passport only for OAuth redirect
- * - JWT used for auth
- * - Cookies work with Next.js & Render
- */
+
 
 import express, { NextFunction, Request, Response } from "express";
 import passport from "./strategies/google.strategy";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
-import userRouter from "./routes/user.route";
 import morgan from "morgan";
-import globalError_handler from "./shared/utils/globalError-handler";
-import questionRoute from "./routes/question.route";
 import path from "path";
-import { compressionMiddleware } from "./middlewares/compression.middleware";
+
+import userRouter from "./routes/user.route";
+import questionRoute from "./routes/question.route";
 import resultRouter from "./routes/result.route";
 import noteRouter from "./routes/note.route";
 import feedRouter from "./routes/feed.route";
-import { cleanupUploadedFiles } from "./shared/utils/cleanupFileUpload";
 import commentRouter from "./routes/comment.route";
 import analyticsRouter from "./routes/analytics.route";
 import liteMetricsRouter from "./matrices/liteMetricsExporter";
 
+import globalError_handler from "./shared/utils/globalError-handler";
+import { compressionMiddleware } from "./middlewares/compression.middleware";
+import { cleanupUploadedFiles } from "./shared/utils/cleanupFileUpload";
+
 const app = express();
 
-/* ------------------------- Middlewares ------------------------- */
-app.set("trust proxy", 1);
+/* ------------------------- Core Middlewares ------------------------- */
 
+app.set("trust proxy", 1);
 app.use(compressionMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// CORS
+/* ------------------------- CORS Setup ------------------------- */
+
 const allowedOrigins = [
   "http://localhost:3000",
   "https://notementor.onrender.com",
@@ -53,18 +50,22 @@ app.use(
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Security + Logs
+/* ------------------------- Security + Static ------------------------- */
+
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
 
-// Passport ONLY initializes (NO session)
+/* ------------------------- Passport OAuth ------------------------- */
+
 app.use(passport.initialize());
 
-/* --------------------------- Routes ---------------------------- */
+/* ---------------------------- Routes ---------------------------- */
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
@@ -84,29 +85,30 @@ app.use(commentRouter);
 app.use(analyticsRouter);
 app.use(liteMetricsRouter);
 
-/* --------------------------- 404 ---------------------------- */
-app.use((req: Request, res: Response) => {
+/* ---------------------------- 404 Handler ---------------------------- */
+
+app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-/* --------------------- Aborted Upload Cleanup --------------------- */
+/* ------------------ Cleanup Aborted Uploads ------------------ */
+
 app.use((req, res, next) => {
-  req.on("aborted", () => {
-    console.warn("⚠️ Request aborted — cleaning temp files");
-    cleanupUploadedFiles((req as any).files);
-  });
+  req.on("aborted", () => cleanupUploadedFiles((req as any).files));
   next();
 });
 
-/* -------------------------- Error Handler -------------------------- */
+/* ----------------------- Global Error Handler ----------------------- */
+
 app.use(globalError_handler);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error("❌ Unhandled Error:", err);
   if (res.headersSent) return next(err);
-  res
-    .status(500)
-    .json({ message: "Internal Server Error", error: err.message || err });
+  res.status(500).json({
+    message: "Internal Server Error",
+    error: err.message || err,
+  });
 });
 
 export default app;
