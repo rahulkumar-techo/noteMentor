@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { CookieOptions, Response } from "express";
 
 interface ICookie {
   res: Response;
@@ -17,18 +17,16 @@ const setTokenCookies = ({
 }: ICookie): void => {
 
   const isProd = process.env.NODE_ENV === "production";
-  const sameSite: "none" | "lax" = isProd ? "none" : "lax";
-  const cookieDomain = process.env.NODE_ENV === "production"
-  ? ".notementor.onrender.com"
-  : undefined;
 
-  const cookieOptions = {
-    httpOnly: true,
-    secure: isProd,
-    sameSite,
-    path: "/",
-    domain:cookieDomain,
-  };
+const cookieOptions: CookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+  path: "/",
+  domain: isProd ? "onrender.com" : undefined,
+  partitioned: true as any   
+};
+
 
 
 
