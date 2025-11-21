@@ -17,7 +17,7 @@ import { requireRole } from "../middlewares/requireRole.middleware";
 
 const isProd = process.env.NODE_ENV === "production";
 const FRONTEND_URL = isProd 
-  ? "https://notementor.vercel.app" 
+  ? "https://notementor-app.vercel.app/" 
   : "http://localhost:3000";
 
 // /api/user/update/academic, /update/personalization, /update/settings?
