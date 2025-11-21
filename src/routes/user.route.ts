@@ -20,19 +20,27 @@ const userRouter = express()
 // Routes
 userRouter.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
+// Redirect user to Google
 userRouter.get(
-  `/auth/google/callback`,
-  (req, res, next) => {
-    passport.authenticate("google", async (err: any, user: IUserRequest) => {
-      if (err || !user) {
-        return res.redirect("http://localhost:3000?error=oauth_failed");
-      }
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
 
-      const refactorUser = {
-        _id: new Types.ObjectId(user?._id),
-      };
+// Handle Google callback
+userRouter.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "http://localhost:3000?error=oauth_failed",
+    session: false, // because you're using JWT, not passport sessions
+  }),
+  async (req: any, res) => {
+    try {
+      const user = req.user;
 
-      const oldRefreshToken = req?.cookies?.refreshToken;
+      const refactorUser = { _id: user._id };
+
+      const oldRefreshToken = req.cookies?.refreshToken;
+
       const { accessToken, refreshToken, accessTTL, refreshTTL } =
         await generateTokens({ user: refactorUser, oldRefreshToken });
 
@@ -44,23 +52,10 @@ userRouter.get(
         refreshTTL,
       });
 
-      // Send HTML redirect page (NOT a file download)
-      res.setHeader("Content-Type", "text/html");
-      return res.send(`
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title>Redirecting...</title>
-</head>
-<body>
-  <script>
-    window.location.href = "http://localhost:3000/";
-  </script>
-</body>
-</html>
-`);
-    })(req, res, next);
+      return res.redirect("http://localhost:3000/");
+    } catch (err) {
+      return res.redirect("http://localhost:3000?error=server_error");
+    }
   }
 );
 
@@ -95,7 +90,7 @@ userRouter.post(
     try {
       const refreshToken = req?.cookies?.refreshToken;
       await redis.del(`refresh:${refreshToken}`);
-      await RefreshTokenModel.deleteOne({ token: refreshToken })
+      await RefreshTokenModel.deleteOne({token:refreshToken})
       // 🧹 Clear authentication cookies
       res.clearCookie("accessToken", {
         httpOnly: true,
