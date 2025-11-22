@@ -15,7 +15,7 @@ export function normalize(item: any, type: string) {
           noteId:item?._id,
           title: item.title,
           excerpt: item.descriptions?.slice(0, 240),
-          userId: item.userId,
+          authorId: item.authorId,
           subjects: item.subjects?.length ? item.subjects : ["General"],
           stats: item.stats,
           thumbnail:item?.thumbnail?.secure_url||""
