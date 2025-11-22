@@ -1,6 +1,6 @@
 
 import streamifier from "streamifier";
-import cloudinary from "../../config/cloudinary.config";
+import cloudinary from "../../../config/cloudinary.config";
 
 export const uploadToCloudinary = (buffer: Buffer, folder?: string) => {
   return new Promise((resolve, reject) => {

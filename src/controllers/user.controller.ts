@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { RegisterInput, registerValidation, updateProfileValidation, registerVerificationValidation, RegisterVerificationInput, LoginValidationInput, loginValidation, UserPayloadSchema } from "../validations/user.validation";
-import HandleResponse from "../shared/utils/handleResponse.utils";
+import HandleResponse from "../shared/ai/utils/handleResponse.utils";
 import userService from "../services/user.service";
-import setTokenCookies from "../shared/utils/set-cookies";
+import setTokenCookies from "../shared/ai/utils/set-cookies";
 import { UserModel } from "../models/user.model";
 
 class UserController {

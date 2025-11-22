@@ -3,7 +3,7 @@
 import CommentModel from "../models/comment.model";
 import NoteModel from "../models/note.model";
 import { Types } from "mongoose";
-import { buildNestedTree } from "../shared/utils/buildNestedTree";
+import { buildNestedTree } from "../shared/ai/utils/buildNestedTree";
 
 
 class CommentService {

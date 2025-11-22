@@ -1,8 +1,8 @@
 // Utility for generating, verifying, and managing short-lived OTP tokens using JWT
 
 import jwt from "jsonwebtoken";
-import { config } from "../../config/env.config";
-import { OtpModel } from "../../models/otp.model";
+import { config } from "../../../config/env.config";
+import { OtpModel } from "../../../models/otp.model";
 
 class OtpToken {
   generateOtpToken(otp: string): string {

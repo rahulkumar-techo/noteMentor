@@ -7,9 +7,9 @@
 
 import jwt, { JwtPayload } from "jsonwebtoken";
 import ms from "ms";
-import redis from "../../config/client-redis";
-import { RefreshTokenModel } from "../../models/refreh.model";
-import { IUser } from "../../interfaces/user.interface";
+import redis from "../../../config/client-redis";
+import { RefreshTokenModel } from "../../../models/refreh.model";
+import { IUser } from "../../../interfaces/user.interface";
 
 export interface IPayload {
   _id: string;

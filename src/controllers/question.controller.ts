@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import HandleResponse from "../shared/utils/handleResponse.utils";
+import HandleResponse from "../shared/ai/utils/handleResponse.utils";
 import { generateQuestions } from "../shared/ai/gemini";
 import { attemptQuestionValidation, attemptQuestionValidationType, questionValidation } from "../validations/question.validation";
 import { questionService } from "../services/question.service";

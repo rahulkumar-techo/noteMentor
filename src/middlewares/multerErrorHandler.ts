@@ -1,4 +1,4 @@
-import { cleanupUploadedFiles } from "../shared/utils/cleanupFileUpload";
+import { cleanupUploadedFiles } from "../shared/ai/utils/cleanupFileUpload";
 import {Request,Response,NextFunction} from "express"
 
 

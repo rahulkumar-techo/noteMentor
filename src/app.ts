@@ -17,9 +17,9 @@ import commentRouter from "./routes/comment.route";
 import analyticsRouter from "./routes/analytics.route";
 import liteMetricsRouter from "./matrices/liteMetricsExporter";
 
-import globalError_handler from "./shared/utils/globalError-handler";
+import globalError_handler from "./shared/ai/utils/globalError-handler";
 import { compressionMiddleware } from "./middlewares/compression.middleware";
-import { cleanupUploadedFiles } from "./shared/utils/cleanupFileUpload";
+import { cleanupUploadedFiles } from "./shared/ai/utils/cleanupFileUpload";
 
 const app = express();
 

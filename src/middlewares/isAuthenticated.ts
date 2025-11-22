@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import HandleResponse from "../shared/utils/handleResponse.utils";
+import HandleResponse from "../shared/ai/utils/handleResponse.utils";
 import { IUserRequest } from "../types/express";
 
 

@@ -1,7 +1,7 @@
 import { CloudinarySigner } from "../config/cloudinary.config";
 import NoteModel from "../models/note.model";
 import { Signed_FileHandler } from "../shared/signed-config/fileHandler";
-import { FileManager } from "../shared/utils/FileManger";
+import { FileManager } from "../shared/ai/utils/FileManger";
 import { notesCache } from "./cache/notesCache";
 
 interface SignedFileInput {

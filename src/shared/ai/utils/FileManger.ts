@@ -1,7 +1,7 @@
 // src/shared/utils/file-upload/fileManager.ts
 // Description: Optimized, type-safe file service layer for Cloudinary (no Sharp)
 
-import NoteModel from "../../models/note.model";
+import NoteModel from "../../../models/note.model";
 import { deleteFromCloudinary, uploadToCloudinary } from "./upload-cloudinary.utils";
 import fs from "fs"
 type CloudinaryUploadResult = {

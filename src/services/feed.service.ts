@@ -3,7 +3,7 @@
 import AdModel from "../models/ad.model";
 import NoteModel from "../models/note.model";
 import QuestionModel from "../models/question.model";
-import { computeRankScore, normalize } from "../shared/utils/feed.utils";
+import { computeRankScore, normalize } from "../shared/ai/utils/feed.utils";
 
 interface FeedItem {
   id: string;

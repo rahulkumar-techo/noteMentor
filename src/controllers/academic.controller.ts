@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AcademicInput, academicValidation } from "../validations/academic.validation";
 import { userAcademicService } from "../services/academic.service";
-import HandleResponse from "../shared/utils/handleResponse.utils";
+import HandleResponse from "../shared/ai/utils/handleResponse.utils";
 
 class AcademicController {
     async editAcademic(req: Request, res: Response) {

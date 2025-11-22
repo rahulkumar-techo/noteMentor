@@ -1,20 +1,11 @@
-/**
- * @class UserService
- * @description Handles user-related operations like profile update, including Cloudinary avatar management.
- */
-
-import { Request, Response } from "express";
 import { IUser, cloudinaryFile } from "../interfaces/user.interface";
 import { UserModel } from "../models/user.model";
-import { FileManager } from "../shared/utils/FileManger";
+import { FileManager } from "../shared/ai/utils/FileManger";
 import { LoginValidationInput, RegisterInput, RegisterVerificationInput, UserPayload } from "../validations/user.validation";
 import { helperService } from "./helper.service";
-import HandleResponse from "../shared/utils/handleResponse.utils";
-import { otpToken } from "../shared/utils/otp-token.utils";
+import { otpToken } from "../shared/ai/utils/otp-token.utils";
 import { OtpModel } from "../models/otp.model";
-import { Types } from "mongoose";
-import { generateTokens } from "../shared/utils/genrate-token.utils";
-import setTokenCookies from "../shared/utils/set-cookies";
+import { generateTokens } from "../shared/ai/utils/genrate-token.utils";
 import bcrypt from "bcryptjs"
 import { RedisCache } from "../shared/cache/redis-cache";
 

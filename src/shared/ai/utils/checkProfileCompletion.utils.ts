@@ -5,7 +5,7 @@
  * Returns detailed information including completion status, missing fields, and percentage.
  */
 
-import { IUser } from "../../interfaces/user.interface";
+import { IUser } from "../../../interfaces/user.interface";
 
 export interface ProfileCheckResult {
   isComplete: boolean;

@@ -1,8 +1,8 @@
 import express, { Request, Response } from "express"
 import passport from "../strategies/google.strategy"
 import { IUserRequest } from "../types/express";
-import setTokenCookies from "../shared/utils/set-cookies";
-import { generateTokens } from "../shared/utils/genrate-token.utils";
+import setTokenCookies from "../shared/ai/utils/set-cookies";
+import { generateTokens } from "../shared/ai/utils/genrate-token.utils";
 import redis from "../config/client-redis";
 import { Types } from "mongoose";
 import autoRefreshAccessToken from "../middlewares/auto-refresh";

@@ -7,7 +7,7 @@
 import { Request, Response } from "express";
 import { deviceValidation } from "../validations/device.validation";
 import { deviceService } from "../services/device.service";
-import HandleResponse from "../shared/utils/handleResponse.utils";
+import HandleResponse from "../shared/ai/utils/handleResponse.utils";
 
 export class DeviceController {
   /**

@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { generateTokens, IPayload, ITokenResult } from "./genrate-token.utils";
-import { RefreshTokenModel } from "../../models/refreh.model"
-import { UserModel } from "../../models/user.model";
+import { RefreshTokenModel } from "../../../models/refreh.model"
+import { UserModel } from "../../../models/user.model";
 
 
 interface IRefreshAccessToken {

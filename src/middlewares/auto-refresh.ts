@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { isTokenExp } from "../shared/utils/genrate-token.utils";
-import HandleResponse from "../shared/utils/handleResponse.utils";
-import RefreshAccessToken from "../shared/utils/refreh-access-token.utils";
-import setTokenCookies from "../shared/utils/set-cookies";
+import { isTokenExp } from "../shared/ai/utils/genrate-token.utils";
+import HandleResponse from "../shared/ai/utils/handleResponse.utils";
+import RefreshAccessToken from "../shared/ai/utils/refreh-access-token.utils";
+import setTokenCookies from "../shared/ai/utils/set-cookies";
 
 
 /**

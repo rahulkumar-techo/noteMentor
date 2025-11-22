@@ -1,7 +1,7 @@
 // controllers/comment.controller.ts
 import { Request, Response } from "express";
 import CommentService from "../services/comment.service";
-import HandleResponse from "../shared/utils/handleResponse.utils";
+import HandleResponse from "../shared/ai/utils/handleResponse.utils";
 import { getIO } from "../socket";
 
 

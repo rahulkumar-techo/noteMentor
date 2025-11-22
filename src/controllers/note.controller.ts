@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import HandleResponse from "../shared/utils/handleResponse.utils";
+import HandleResponse from "../shared/ai/utils/handleResponse.utils";
 import {
   noteValidationSchema,
   noteSettingValidation,
